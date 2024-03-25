@@ -9,6 +9,8 @@
 
   let editGrades = false;
   let hideGPA = true;
+
+  import Ty from "./TY.svelte";
 </script>
 
 <div id="pes-gpa">
