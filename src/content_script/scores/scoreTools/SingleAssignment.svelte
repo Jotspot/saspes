@@ -14,8 +14,8 @@
     type GradePercentage,
   } from "../../../models/grades";
 
-  import Shepherd from "shepherd.js";
   import browser from "webextension-polyfill";
+  import Shepherd from "shepherd.js";
 
   export let finalPercent: number;
   export let gradeManager: GradeManager;
