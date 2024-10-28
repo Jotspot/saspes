@@ -28,6 +28,7 @@ import { defineConfig } from "vite";
 import manifest, { realVersion } from "./manifest.config.js";
 import pkg from "./package.json";
 
+// import vitePluginRunCommandOnDemand from "./helpers/viterunplugin.js";
 
 
 export default defineConfig({
@@ -44,6 +45,7 @@ export default defineConfig({
       manifest: manifest(),
       browser: (process.argv.includes("BUILD_MODE_firefox") ? "firefox" : "chrome"),
     }),
+
   ],
   define: {
     SAS_PES_VERSION: `"${process.argv.includes("SAS_PES_production") ? pkg.version : `${pkg.version} Development Build ${realVersion}`}"`,

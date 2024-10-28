@@ -32,7 +32,8 @@ export default defineManifest(async (env) => ({
   "content_scripts": [
     {
       "matches": ["https://powerschool.sas.edu.sg/guardian/scores.html*"],
-      "js": ["src/content_script/scores/index.ts"]
+      "js": ["src/content_script/scores/index.ts"],
+
     },
     {
       "matches": ["https://powerschool.sas.edu.sg/*"],
@@ -66,8 +67,9 @@ export default defineManifest(async (env) => ({
   "web_accessible_resources": [
     {
       "matches": ["https://powerschool.sas.edu.sg/*"],
-      "resources": ["public/icon.png"]
-    }
+      "resources": ["public/icon.png"],
+      "use_dynamic_url": false
+    },
   ],
   "background": {
     "service_worker": "src/background.ts",
