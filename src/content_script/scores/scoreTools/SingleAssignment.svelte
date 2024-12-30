@@ -211,7 +211,7 @@
       useModalOverlay: true,
       defaultStepOptions: {
         classes:
-          "tw-border tw-rounded-md tw-border-[#CCCCCC] tw-border-solid tw-p-2 tw-bg-[#FFFFFFF0] tw-max-w-[48rem]",
+          "tw-border tw-rounded-md tw-border-[#CCCCCC] tw-border-solid tw-p-2 tw-bg-[#FFFFFFF0] tw-max-w-[48rem] modal",
         scrollTo: true,
         scrollToHandler: (el) => {
           window.scrollTo({
@@ -266,7 +266,7 @@
       },
       {
         id: "tour-2",
-        text: "This is the category weighting table. You can change the names of the categories (for better organization) and the weights of the categories here.<br/><br/>Categories can be class units (e.g. Unit 2), or different types of assignments (e.g. Summative) depending on how your teacher uses categories. Your category names can be found in PowerSchool as well as your syllabus, which will have more information.",
+        text: "This is the category weighting table. You can change the names of the categories (for better organization) and the weights of the categories here.<br/><br/>Categories can be class units (e.g. Unit 2), or different types of assignments (e.g. Summative) depending on how your teacher uses categories. Your category names can be found in PowerSchool as well as your syllabus. The syllabus will have more information that you need later, so refer to the syllabus more.",
         attachTo: {
           element: "#cattable",
           on: "right",
@@ -341,6 +341,37 @@
         classes: "tw-mt-2 tw-w-96",
       },
       {
+        id: "tour-7a",
+        text: "This option allows you to exempt an assignment. This means that the assignment will not be counted in your final grade calculation. Teachers sometime have exemption policies depending on the grades you receive, so this is a useful tool for that. If it is exempted, the background of the row will be purple with a white strikethrough, resembling the PowerSchool exempt icon.<br/><br/>If exempted, please unexempt this assignment before continuing. This is necessary for the tour to work. ",
+        attachTo: {
+          element: ".firstExempt",
+          on: "bottom",
+        },
+        classes: "tw-mt-2 tw-w-96",
+        buttons: [
+          {
+            text: "Back",
+            action: tour.back,
+          },
+          {
+            text: "Next",
+            action: () => {
+              if (!curAssignments[0][0].exempt) {
+                tour.next();
+              } else {
+                alert(
+                  "Please unexempt this assignment by clicking the checkbox. You can reexempt it after the tour.",
+                );
+              }
+            },
+          },
+          {
+            text: "Cancel",
+            action: tour.complete,
+          },
+        ],
+      },
+      {
         id: "tour-8",
         text: '<b>Assignment weights are relative to each other, and they are not percentages.</b> If two assignments have the same weight number, they will be weighed equally.<br/><br/>If one assignment has a weight of 9 and another has a weight of 18, the second assignment will be weighted twice as much as the first assignment. <br/><br/>Within the PowerSchool system, the denominator in the "Score" cells is always the assignment weight. So, if you have an assignment out of 9 and another out of 10, the one out of 10 will be weighed more. It is a common misconception between teachers and students that they would be weighed equally, so be careful about this.<br/><br/>It is not recommended to change the weights of existing assignments as the assignment weights are automatically filled from PowerSchool, so even if the teacher inputted them wrong, they are the same weights used by PowerSchool to calculate your official final percent/grade. ',
         attachTo: {
@@ -350,8 +381,26 @@
         classes: "tw-ml-2 tw-w-96",
       },
       {
+        id: "tour-9",
+        text: "Weight in category refers to the percentage weight that an assignment has in the category. There is also a fraction shown if it is simple enough. This helps you understand which assignments are weighed more in the category in a simpler way. This is not an input screen, it is only a calculated value for your reference.",
+        attachTo: {
+          element: ".firstRelWeight",
+          on: "bottom",
+        },
+        classes: "tw-mt-2 tw-w-96",
+      },
+      {
+        id: "tour-9a",
+        text: "Weight in final grade refers to the percentage weight that an assignment has in your total final grade, considering all the categories. This is not an input screen, it is only a calculated value for your reference.",
+        attachTo: {
+          element: ".firstTotWeight",
+          on: "bottom",
+        },
+        classes: "tw-mt-2 tw-w-96",
+      },
+      {
         id: "tour-10",
-        text: "This dropdown menu lets you change the grade of the assignment. A+ is equal to a 90%, but the cutoff for a final grade of A+ is 85%. For each successive grade, the cutoff and value decreases by 10%. The numbers for cutoff can be found by hovering on the questions mark beside your Official Final Percent at the top of the page, and the numbers for grade value can be found in this dropdown.",
+        text: 'This dropdown menu lets you change the grade of the assignment. A+ is equal to a credit of 90%, but the cutoff for a final grade of A+ is 85%. For each successive grade, the cutoff value and grade credit value decreases by 10%. The numbers for cutoff can be found by hovering on the questions mark beside your "Official Final Percent" at the top of the page, and the numbers for grade value can be found in this dropdown.',
         attachTo: {
           element: ".firstGradeAss",
           on: "right",
@@ -378,7 +427,7 @@
       },
       {
         id: "tour-13",
-        text: "You can also select 'See All Possibilities' from this dropdown. It will show you every single possible final grade and percent you can get with that assignment. This is useful for seeing how much an assignment will affect your grade and finding the minimum grade you need to achieve a certain target final grade. You can only have one assignment with 'See All Possibilities' selected. <br/><br/>Click on the dropdown and select 'See All Possibilities' on any assignment before continuing.",
+        text: "You can also select 'See All Possibilities' from this dropdown. It will show you every single possible final grade and percent you can get with that assignment. This is useful for seeing how much an assignment will affect your grade and finding the minimum grade you need to achieve a certain target final grade. You can only have one assignment with \"See All Possibilities\" selected. The row of the \"See all Possibilities\" assignment in the assignment table and the category row in the category table containing the assignment will be colored green so you can find it easily. <br/><br/>Click on the dropdown and select 'See All Possibilities' on any assignment before continuing.",
         attachTo: {
           element: ".firstGradeAss",
           on: "right",
@@ -468,7 +517,7 @@
     <!-- CATEGORY WEIGHTING -->
     <button id="helpBtn" class="!tw-ml-0"
       >Tutorial (click to start guided tour and interactive explanation) <b
-        >[HIGHLY RECOMMENDED]</b
+        >[HIGHLY RECOMMENDED AFTER UPDATE]</b
       ></button
     >
     <h2 class="!tw-mb-2 !tw-mt-3" id="catw">Category Weighting</h2>
@@ -486,35 +535,31 @@
       </thead>
       <tbody>
         {#each gradeManager.categories as category, i}
-          <tr class:tw-bg-yellow-200={category == curCategory}>
-            <td
-              class="tw-align-middle"
-              class:!tw-bg-inherit={category == curCategory}
+          <tr
+            class:curCategoryBg={category == curCategory}
+            class:seeAssBg={seeAssignment?.category == category}
+          >
+            <td class="tw-align-middle"
               ><input
                 type="text"
-                class:!tw-bg-inherit={category == curCategory}
                 class="tw-rounded-md tw-border-[#CCCCCC] tw-border-solid tw-border tw-p-1"
                 bind:value={gradeManager.categories[i].name}
               /></td
             >
             {#if showSumOfInnerWeights}
-              <td
-                class="tw-align-middle"
-                class:!tw-bg-inherit={category == curCategory}
-              >
+              <td class="tw-align-middle">
                 {Number(
                   gradeManager.sumOfWeightsInCategory(category).toFixed(2),
                 )}
               </td>
             {/if}
-            <td class:!tw-bg-inherit={category == curCategory}>
+            <td>
               <div class="tw-inline-flex tw-flex-row" class:firstCat={i == 0}>
                 <input
                   type="number"
                   class="tw-rounded-l-md tw-border-[#CCCCCC] tw-border-solid tw-border tw-p-1 tw-w-12"
                   max={100}
                   min={0}
-                  class:!tw-bg-inherit={category == curCategory}
                   bind:value={gradeManager.categories[i].weight}
                 />
                 <div
@@ -524,10 +569,7 @@
                 </div>
               </div>
             </td>
-            <td
-              class="tw-text-center tw-align-middle"
-              class:!tw-bg-inherit={category == curCategory}
-            >
+            <td class="tw-text-center tw-align-middle">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -584,50 +626,55 @@
       </select>
     </p>
     <p class="!tw-mb-2">
-      Note: Assignment weights do not have to add up to 100%; they will be
-      scaled automatically during calculation.
+      Note: "Weight in category" and "Weight in final grade" are calculated
+      values for your reference; you do not edit them. See the tutorial for more
+      info.
     </p>
     <p class="!tw-mb-2">
       Choose "See all possibilities" as a grade in one assignment to see the
       possible final grades you would recieve if you got each possible grade on
       that assignment.
     </p>
-    <table class="!tw-w-auto zebra grid !tw-ml-0">
+    <table class="!tw-w-auto zebra grid !tw-ml-0 strikeable">
       <thead>
         <tr class="">
           <th class="!tw-text-center">Name</th>
-          <th class="tw-text-center">Relative weight</th>
           <th class="tw-text-center">Grade</th>
+          <th class="tw-text-center">Assignment weight</th>
+          <th class="tw-text-center">Weight in category</th>
+          <th class="tw-text-center">Weight in final grade</th>
+          <th class="tw-text-center">Exempt</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         {#each curAssignments as [assignment, i]}
-          <tr>
-            <td class="tw-align-middle">
+          <tr
+            class:exempt={assignment.exempt}
+            class:tw-bg-green-200={assignment.see}
+          >
+            <td
+              class="tw-align-middle"
+              class:exemptSeeTd={assignment.exempt || assignment.see}
+            >
               <input
                 type="text"
                 class="tw-rounded-md tw-h-full tw-border-[#CCCCCC] tw-border-solid tw-border tw-p-1 tw-w-96"
+                class:exemptSeeTd={assignment.exempt || assignment.see}
+                disabled={assignment.exempt}
                 bind:value={gradeManager.assignments[i].name}
               />
             </td>
-            <td class="tw-text-center tw-align-middle">
-              <div class="tw-inline-flex tw-flex-row">
-                <input
-                  class:firstAss={i == 0}
-                  type="number"
-                  class="tw-rounded-md tw-border-[#CCCCCC] tw-border-solid tw-border tw-p-1 tw-w-24"
-                  max={100}
-                  min={0}
-                  bind:value={gradeManager.assignments[i].weight}
-                />
-              </div>
-            </td>
 
-            <td class="tw-text-center tw-align-middle">
+            <td
+              class="tw-text-center tw-align-middle"
+              class:exemptSeeTd={assignment.exempt || assignment.see}
+            >
               <select
                 class="tw-rounded-md tw-h-full tw-border-[#CCCCCC] tw-border-solid tw-border tw-p-1"
                 class:firstGradeAss={i == 0}
+                class:exemptSeeTd={assignment.exempt || assignment.see}
+                disabled={assignment.exempt}
                 on:change={(e) => {
                   onGradeChange(e, i);
                 }}
@@ -649,14 +696,67 @@
                 >
               </select>
             </td>
-            <td class="tw-text-center tw-align-middle">
+
+            <td
+              class="tw-text-center tw-align-middle strikeable"
+              class:exemptSeeTd={assignment.exempt || assignment.see}
+            >
+              <div class="tw-inline-flex tw-flex-row">
+                <input
+                  class:firstAss={i == 0}
+                  class:exemptSeeTd={assignment.exempt || assignment.see}
+                  type="number"
+                  disabled={assignment.exempt}
+                  class="tw-rounded-md tw-border-[#CCCCCC] tw-border-solid tw-border tw-p-1 tw-w-full"
+                  min={0}
+                  bind:value={gradeManager.assignments[i].weight}
+                />
+              </div>
+            </td>
+
+            <td
+              class="tw-text-center tw-align-middle strikeable"
+              class:exemptSeeTd={assignment.exempt || assignment.see}
+            >
+              {#if !assignment.exempt}
+                <span class:firstRelWeight={i == 0}>
+                  {gradeManager.getEffectiveRelativeWeight(i)}
+                </span>
+              {/if}
+            </td>
+            <td
+              class="tw-text-center tw-align-middle strikeable"
+              class:exemptSeeTd={assignment.exempt || assignment.see}
+            >
+              {#if !assignment.exempt}
+                <span class:firstTotWeight={i == 0}>
+                  {gradeManager.getEffectiveWeightInTotal(i)}
+                </span>
+              {/if}
+            </td>
+            <td
+              class="tw-text-center tw-align-middle"
+              class:exemptSeeTd={assignment.exempt || assignment.see}
+            >
+              <input
+                type="checkbox"
+                class="!tw-mb-0 !tw-mx-0 !tw-mt-[7px]"
+                class:firstExempt={i == 0}
+                disabled={assignment.see}
+                bind:checked={gradeManager.assignments[i].exempt}
+              />
+            </td>
+            <td
+              class="tw-text-center tw-align-middle"
+              class:exemptSeeTd={assignment.exempt || assignment.see}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke-width="1.5"
                 stroke="currentColor"
-                class={`tw-w-6 tw-h-6 tw-align-middle tw-border tw-p-0.5 tw-border-solid tw-rounded-full ${
+                class={`tw-w-6 tw-h-6 tw-align-middle tw-border tw-p-0.5 tw-border-solid tw-rounded-full removebtn ${
                   curAssignments.length == 1
                     ? "tw-border-slate-400 hover:tw-cursor-not-allowed tw-text-slate-400"
                     : "tw-border-black hover:tw-border-red-500 hover:tw-cursor-pointer hover:tw-text-red-500"

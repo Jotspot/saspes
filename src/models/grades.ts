@@ -92,6 +92,28 @@ export const formattedGrade = (grade: Grade) => {
   return grade;
 }
 
+// Function to return gcd of a and b 
+function gcd(a: number, b: number): number {
+  if (a == 0)
+    return b;
+  return gcd(b % a, a);
+}
+
+// Function to find gcd of array of numbers
+function findGCD(arr: number[]): number {
+  let result = arr[0];
+  for (let i = 1; i < arr.length; i++) {
+    result = gcd(arr[i], result);
+
+    if (result == 1) {
+      return 1;
+    }
+  }
+  return result;
+}
+
+
+
 /**
  * Returns the letter grade of a final grade percentage
  * @param percent final grade percentage
@@ -140,14 +162,24 @@ export class GradeManager {
     this.assignments = assignments;
   }
 
-  public getAssignmentsByCategory(category: Category): Assignment[] {
-    return this.assignments.filter((assignment) => assignment.category === category);
+  public getAssignmentsByCategory(category: Category, includeExempt: boolean = true): Assignment[] {
+    return this.assignments.filter((assignment) => assignment.category === category && (includeExempt || !assignment.exempt));
   }
 
   public getAssignmentsByCategoryEntries(category: Category): [Assignment, number][] {
     return (this.assignments.map((a, i) => [a, i]) as [Assignment, number][]).filter((assignmentEntry) => assignmentEntry[0].category === category);
   }
 
+
+  // public seeAssignmentInCategory(categoryIndex: number): boolean {
+  //   let category = this.categories[categoryIndex];
+  //   if (category === null || category === undefined) return false;
+  //   let categoryAssignments = this.getAssignmentsByCategory(category, false);
+  //   for (let assignment of categoryAssignments) {
+  //     if (assignment.see) return true;
+  //   }
+  //   return false;
+  // }
 
   public getCategoryByName(name: string): Category | null {
     for (let category of this.categories) {
@@ -184,12 +216,44 @@ export class GradeManager {
     return null;
   }
 
+  public getEffectiveRelativeWeight(assignmentIndex: number): string {
+    let assignment = this.assignments[assignmentIndex];
+    if (assignment === undefined) return "";
+    let categoryAssignments = this.getAssignmentsByCategory(assignment.category, false);
+
+    let weights = categoryAssignments.map((a) => a.weight);
+
+    if (weights.includes(0)) return "";
+
+    let sum = weights.reduce((a, b) => a + b, 0);
+
+    let gcd = findGCD(weights);
+
+    if (assignment.weight / gcd > 200 || sum / gcd > 200) return `${Math.round((assignment.weight / sum) * 10 * 100) / 10}%`;
+
+    return `${assignment.weight / gcd}/${sum / gcd} (${Math.round((assignment.weight / sum) * 10 * 100) / 10}%)`;
+  }
+
+  public getEffectiveWeightInTotal(assignmentIndex: number): string {
+    let assignment = this.assignments[assignmentIndex];
+    let categoryAssignments = this.getAssignmentsByCategory(assignment.category, false);
+
+    if (this.getTotalWeight() == 0) return "";
+
+    return String(Math.round((assignment.weight / this.sumOfWeightsInCategory(assignment.category, false)) * (assignment.category.weight / this.getTotalWeight()) * 100 * 10) / 10) + "%";
+  }
+
+  /**
+   * 
+   * @param useCalced if true, the see assignment is not included in the calculations
+   * @returns true if the weights are valid, false otherwise. 
+   */
   public validWeights(useCalced: boolean = false): boolean {
     let curTotalWeight = 0;
 
     let seeAssignment = this.getSeeAssignment();
     for (let category of this.categories) {
-      if (useCalced && category.id == seeAssignment?.category.id && this.getAssignmentsByCategory(seeAssignment.category).length == 1) continue;
+      if (useCalced && category.id == seeAssignment?.category.id && this.getAssignmentsByCategory(seeAssignment.category, false).length == 1) continue;
       curTotalWeight += category.weight;
       if (category.weight < 0 || category.weight > 100) {
         return false;
@@ -203,11 +267,17 @@ export class GradeManager {
     return true;
   }
 
-  public sumOfWeightsInCategory(category: Category): number {
-    let categoryAssignments = this.getAssignmentsByCategory(category);
+
+  /**
+   * @param category the category to calculate the sum of the weights of all assignments in the category
+   * @param excludeSee if true, the see assignment is not included in the calculations (default is true)
+   * @returns the sum of the weights of all assignments in the category, excluding the exempt assignments
+   */
+  public sumOfWeightsInCategory(category: Category, excludeSee: boolean = true): number {
+    let categoryAssignments = this.getAssignmentsByCategory(category, false);
     let categoryAssignmentWeight = 0;
     for (let assignment of categoryAssignments) {
-      if (assignment.see) continue;
+      if (excludeSee && assignment.see) continue;
       categoryAssignmentWeight += assignment.weight;
     }
     return categoryAssignmentWeight;
@@ -220,12 +290,14 @@ export class GradeManager {
     let calcedTotalWeight = this.getCalcedTotalWeight();
 
     for (let category of this.categories) {
-      let categoryAssignments = this.getAssignmentsByCategory(category);
+      let categoryAssignments = this.getAssignmentsByCategory(category, false);
+      // if the see assignment is the only assignment in the category, it is not included in calculations
       if (this.getSeeAssignment()?.category.id == category.id && categoryAssignments.length == 1) continue;
       let categoryGrade = 0;
       let categorySumOfWeights = this.sumOfWeightsInCategory(category);
       for (let assignment of categoryAssignments) {
         if (assignment.see) continue;
+        if (assignment.exempt) continue;
         if (assignment.grade == "INC_NO_CREDIT") continue;
         if (assignment.grade == "INC_NO_CLASS_CREDIT") return SpecialGrade.INC;
         categoryGrade += gradeToPercent[assignment.grade] * (assignment.weight);
@@ -237,17 +309,21 @@ export class GradeManager {
     return totalGrade;
   }
 
+  /**
+   * @returns the total weight of all categories, excluding the weight of the see assignment's category if it is the only assignment in the category as the see assignment is not included in calculations (which is why the word calced is used)
+   */
   public getCalcedTotalWeight(): number {
     let totalWeight = this.getTotalWeight();
 
     let seeAssignment = this.getSeeAssignment();
-    if (seeAssignment && this.getAssignmentsByCategory(seeAssignment.category).length <= 1) return totalWeight - seeAssignment.category.weight;
+    if (seeAssignment && this.getAssignmentsByCategory(seeAssignment.category, false).length <= 1) return totalWeight - seeAssignment.category.weight;
     return totalWeight;
   }
 
   public getTotalWeight() {
     let totalWeight = 0;
     for (let category of this.categories) {
+      if (this.getAssignmentsByCategory(category, false).length == 0) continue;
       totalWeight += category.weight;
     }
     return totalWeight;
@@ -257,10 +333,11 @@ export class GradeManager {
     let category = this.getCategoryById(categoryId);
     if (category === null) return SpecialGrade.INVALID;
     let categoryGrade = 0;
-    let categoryAssignments = this.getAssignmentsByCategory(category);
+    let categoryAssignments = this.getAssignmentsByCategory(category, false);
     let categorySumOfWeights = this.sumOfWeightsInCategory(category);
     for (let assignment of categoryAssignments) {
       if (assignment.see) continue;
+      if (assignment.exempt) continue;
       if (assignment.grade == "INC_NO_CREDIT") continue;
       if (assignment.grade == "INC_NO_CLASS_CREDIT") return SpecialGrade.INC;
       categoryGrade += gradeToPercent[assignment.grade] * assignment.weight;
@@ -306,15 +383,17 @@ export class Assignment {
   public weight: number
   public id: number;
   public see: boolean = false;
+  public exempt: boolean;
   public static nextId = 0;
 
-  public constructor(name: string, grade: Grade, category: Category, weight: number) {
+  public constructor(name: string, grade: Grade, category: Category, weight: number, exempt: boolean = false) {
     this.name = name;
     this._grade = grade;
     this._percent = gradeToPercent[grade];
     this.category = category;
     this.weight = weight;
     this.id = Category.nextId++;
+    this.exempt = exempt;
   }
 
   set grade(grade: Grade) {

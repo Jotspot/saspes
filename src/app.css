@@ -20,3 +20,75 @@
 .current-step {
   @apply tw-outline tw-outline-offset-2 tw-outline-yellow-500;
 }
+
+table.strikeable {
+    border-collapse: collapse;
+}
+
+table.strikeable tr td {
+    position: relative;
+}
+
+table.strikeable tr th {
+    position: relative;
+}
+
+
+table.strikeable tr.exempt td.strikeable:after {
+    content: " ";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    outline: 2px solid #FFFFFF;
+    width: 100%;
+    z-index: 1000000;
+}
+.modal {
+  z-index: 2000000;
+}
+
+table.strikeable tr.exempt {
+  @apply !tw-text-gray-200 !tw-italic;
+  background-color: #8B41B2;
+}
+
+.curCategoryBg {
+  @apply tw-bg-yellow-200;
+}
+
+.curCategoryBg.seeAssBg {
+  @apply !tw-bg-yellow-200;
+}
+
+
+.curCategoryBg * {
+  @apply !tw-bg-inherit;
+}
+
+.seeAssBg {
+  @apply tw-bg-green-200;
+}
+
+.seeAssBg * {
+  @apply !tw-bg-inherit;
+}
+
+table.strikeable tr.exempt *:not(.removebtn) {
+  @apply !tw-border-gray-600;
+}
+
+table.strikeable tr.exempt .removebtn{
+  @apply tw-border-gray-300;
+}
+
+
+table.strikeable tr.exempt .removebtn:hover{
+  @apply tw-border-red-500;
+}
+
+
+
+.exemptSeeTd {
+  @apply !tw-bg-inherit !tw-text-inherit;
+  font-style: inherit !important;
+}

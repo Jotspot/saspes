@@ -1,9 +1,5 @@
 <script lang="ts">
-  import {
-    formattedGrade,
-    gradeToPercent,
-    listOfGrades,
-  } from "../..//models/grades";
+  import { formattedGrade, listOfGrades } from "../..//models/grades";
   import { gradeToGPA, type ClassManager } from "../../models/classes";
 
   export let classManager: ClassManager;
@@ -23,13 +19,13 @@
 
   {#if !hideGPA}
     <p class="tw-font-bold">Do not rely on any data from SAS PES!!</p>
-    {#if sem1GPA && sem1GPA !== -1}
+    {#if typeof sem1GPA === "number" && sem1GPA !== -1}
       <p>First Semester GPA: {classManager.calculateGPA(1).toFixed(2)}</p>
     {:else}
       <p>First Semester GPA: N/A</p>
     {/if}
 
-    {#if sem2GPA && sem2GPA !== -1}
+    {#if typeof sem2GPA === "number" && sem2GPA !== -1}
       <p>Second Semester GPA: {classManager.calculateGPA(2).toFixed(2)}</p>
     {:else}
       <p>Second Semester GPA: N/A</p>

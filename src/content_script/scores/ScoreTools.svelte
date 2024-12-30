@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { GradeManager } from "../../models/grades";
   import { Tools } from ".";
+  import type { GradeManager } from "../../models/grades";
   import SingleAssignment from "./scoreTools/SingleAssignment.svelte";
 
   let curTool: Tools = Tools.CATEGORY_WEIGHTING;
@@ -35,7 +35,7 @@
           <span class="tw-font-bold"
             >Do not rely on any data from SAS PES!!</span
           >
-          Teachers can override your final grade, and calculations are not entirely
+          Teachers can override your final grade, and calculations can be not entirely
           accurate.
         </p>
       </div>

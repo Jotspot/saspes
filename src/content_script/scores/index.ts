@@ -22,11 +22,11 @@
  *
  */
 
-import { Assignment, Category, GradeManager, listOfGrades, type Grade, gradeToPercent } from "../../models/grades";
+import browser from "webextension-polyfill";
+import { Assignment, Category, GradeManager, listOfGrades, type Grade } from "../../models/grades";
 import FinalPercent from "./FinalPercent.svelte";
 import ScoreTools from "./ScoreTools.svelte";
 import { getFinalPercent } from "./scoresUtilities";
-import browser from "webextension-polyfill";
 
 export enum Tools {
   CATEGORY_WEIGHTING = "CATEGORY_WEIGHTING",
@@ -75,16 +75,16 @@ if (document.getElementById("pes-fp") || document.getElementById("pes-st")) {
   document.getElementById("pes-st")?.remove();
 }
 console.log(document.getElementById("pes-fp"));
-let gradeManagerO = new GradeManager([], [], 100);
+let gradeManagerO = new GradeManager([], []);
 
 const doScoreTools = async () => {
   await waitForElm("#scoreTable");
-  const gradeManager = new GradeManager([], [], 100);
+  const gradeManager = new GradeManager([], []);
   const rowEles = document.querySelectorAll("tr.ng-scope");
 
   for (let i = 0; i < rowEles.length; i++) {
     let rowEle = rowEles[i];
-    if (rowEle.querySelector("td.codeCol > div.tt-exempt") != null || rowEle.querySelector("td.codeCol > div.tt-excluded") != null) {
+    if (rowEle.querySelector("td.codeCol > div.tt-excluded") != null) {
       console.log(rowEle); continue;
     };
 
@@ -123,7 +123,7 @@ const doScoreTools = async () => {
         weighting = Number(scoreEle.textContent?.trim().split("/")[1]);
       }
 
-      let assignment = new Assignment(assignmentEle.textContent.trim(), grade, category, weighting);
+      let assignment = new Assignment(assignmentEle.textContent.trim(), grade, category, weighting, rowEle.querySelector("td.codeCol > div.tt-exempt") != null ? true : false);
       gradeManager.addAssignment(assignment);
     }
   }
@@ -144,11 +144,6 @@ const doScoreTools = async () => {
     }
   }
 
-  let totalWeight = await browser.storage.local.get("totalWeight" + key);
-  totalWeight = totalWeight["totalWeight" + key] || 0;
-  if (Number(totalWeight) > 0) {
-    gradeManager.totalWeight = Number(totalWeight);
-  }
 
   console.log(gradeManager);
   gradeManagerO = gradeManager;
