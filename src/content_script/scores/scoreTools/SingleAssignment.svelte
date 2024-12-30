@@ -468,7 +468,7 @@
       },
       {
         id: "tour-end",
-        text: "Congrats, you made it to the end of the tour! You can always restart the tour by clicking the 'Tutorial' button at the top of the page.",
+        text: "Congrats, you made it to the end of the tour! If you still have any lingering questions, feel free to reach out to me on Google Chat or email at <a href=\"mailto:mathur47349@sas.edu.sg\">mathur47349@sas.edu.sg</a>. You can always restart the tour by clicking the 'Tutorial' button at the top of the page.",
         classes: "tw-w-96",
         buttons: [
           {
@@ -648,7 +648,7 @@
         </tr>
       </thead>
       <tbody>
-        {#each curAssignments as [assignment, i]}
+        {#each curAssignments as [assignment, i], idx}
           <tr
             class:exempt={assignment.exempt}
             class:tw-bg-green-200={assignment.see}
@@ -672,7 +672,7 @@
             >
               <select
                 class="tw-rounded-md tw-h-full tw-border-[#CCCCCC] tw-border-solid tw-border tw-p-1"
-                class:firstGradeAss={i == 0}
+                class:firstGradeAss={idx == 0}
                 class:exemptSeeTd={assignment.exempt || assignment.see}
                 disabled={assignment.exempt}
                 on:change={(e) => {
@@ -703,7 +703,7 @@
             >
               <div class="tw-inline-flex tw-flex-row">
                 <input
-                  class:firstAss={i == 0}
+                  class:firstAss={idx == 0}
                   class:exemptSeeTd={assignment.exempt || assignment.see}
                   type="number"
                   disabled={assignment.exempt}
@@ -719,7 +719,7 @@
               class:exemptSeeTd={assignment.exempt || assignment.see}
             >
               {#if !assignment.exempt}
-                <span class:firstRelWeight={i == 0}>
+                <span class:firstRelWeight={idx == 0}>
                   {gradeManager.getEffectiveRelativeWeight(i)}
                 </span>
               {/if}
@@ -729,7 +729,7 @@
               class:exemptSeeTd={assignment.exempt || assignment.see}
             >
               {#if !assignment.exempt}
-                <span class:firstTotWeight={i == 0}>
+                <span class:firstTotWeight={idx == 0}>
                   {gradeManager.getEffectiveWeightInTotal(i)}
                 </span>
               {/if}
@@ -741,7 +741,7 @@
               <input
                 type="checkbox"
                 class="!tw-mb-0 !tw-mx-0 !tw-mt-[7px]"
-                class:firstExempt={i == 0}
+                class:firstExempt={idx == 0}
                 disabled={assignment.see}
                 bind:checked={gradeManager.assignments[i].exempt}
               />
@@ -868,7 +868,7 @@
         )}{newFinalPercent !== SpecialGrade.INC
           ? ` with a percentage of ${newFinalPercent.toFixed(2)}%`
           : ""}{seeAssignment
-          ? " without the 'See all possibilities' assignment"
+          ? " with the 'See all possibilities' assignment exempted"
           : ""}.
       {/if}
     </div>

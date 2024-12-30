@@ -23,9 +23,9 @@
  */
 
 import { Class, ClassManager } from "../../models/classes";
-import GPA from "./GPA.svelte";
-import { listOfGrades, type Grade, convertPercentCutoffToGrade } from "../../models/grades";
+import { convertPercentCutoffToGrade, listOfGrades, type Grade } from "../../models/grades";
 import { getFinalPercent } from "../scores/scoresUtilities";
+import GPA from "./GPA.svelte";
 import Ty from "./TY.svelte";
 
 
