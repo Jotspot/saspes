@@ -6,6 +6,9 @@
   let curTool: Tools = Tools.CATEGORY_WEIGHTING;
   export let finalPercent: Promise<number | null>;
   export let gradeManager: GradeManager;
+  export let leftOver: Record<string, number>;
+
+  $: leftOverE = Object.entries(leftOver);
 </script>
 
 <div id="pes-st">
@@ -29,7 +32,11 @@
         </div>
 
         {#if curTool == Tools.CATEGORY_WEIGHTING}
-          <SingleAssignment {finalPercent} {gradeManager} />
+          <SingleAssignment
+            {finalPercent}
+            {gradeManager}
+            leftOverEntries={leftOverE}
+          />
         {/if}
         <p>
           <span class="tw-font-bold"

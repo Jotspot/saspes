@@ -138,9 +138,12 @@ const doScoreTools = async () => {
 
   saved.weights = saved["weights" + key] || {};
 
+  let leftOver = { ...(saved.weights) };
+
   for (let category of gradeManager.categories) {
     if (saved.weights[category.name]) {
       category.weight = Number(saved.weights[category.name]);
+      delete leftOver[category.name];
     }
   }
 
@@ -149,7 +152,7 @@ const doScoreTools = async () => {
   gradeManagerO = gradeManager;
   new ScoreTools({
     target: target as Element,
-    props: { finalPercent, gradeManager: gradeManagerO }
+    props: { finalPercent, gradeManager: gradeManagerO, leftOver }
   })
 }
 

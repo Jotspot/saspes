@@ -18,6 +18,7 @@
 
   export let finalPercent: number;
   export let gradeManager: GradeManager;
+  export let leftOverEntries: [string, number][];
 
   let curCategoryId: number;
 
@@ -31,8 +32,8 @@
     gradeManager = gradeManager;
   }
 
-  function addNewCategory() {
-    let newCat = new Category("New Category", 0);
+  function addNewCategory(name: string = "New Category", weight: number = 0) {
+    let newCat = new Category(name, weight);
     gradeManager.addCategory(newCat);
     addNewAssignment(newCat);
   }
@@ -56,6 +57,15 @@
       seeAssignment = null;
     }
     let id: number = 0;
+
+    leftOverEntries = [
+      ...leftOverEntries,
+      [
+        gradeManager.categories[index].name,
+        gradeManager.categories[index].weight,
+      ],
+    ];
+
     gradeManager.categories = gradeManager.categories.filter((_, i) => {
       if (i == index) id = _.id;
       return i !== index;
@@ -324,7 +334,7 @@
       },
       {
         id: "tour-6",
-        text: "You can click this to add a new category. This will also automatically add a new assignment to the new category.",
+        text: "You can click this to add a new category. This will also automatically add a new assignment to the new category. If you have previously saved category weights with additional custom categories or deleted a category and want to add it back, there is a dropdown when you hover on the button where you can quickly add those categories back with the weight and name autofilled.",
         attachTo: {
           element: "#addCat",
           on: "bottom",
@@ -603,9 +613,56 @@
       </tbody>
     </table>
     <div class="tw-mb-2">
-      <button on:click={addNewCategory} id="addCat" class="!tw-ml-0"
-        >Add new category</button
-      >
+      {#if leftOverEntries.length > 0}
+        <div class="tw-relative tw-group tw-inline-block">
+          <button
+            class="!tw-ml-0"
+            on:click={() => addNewCategory()}
+            role="menu"
+          >
+            Add new category
+          </button>
+
+          <div
+            class="tw-absolute tw-z-10 tw-hidden tw-bg-grey-200 group-hover:tw-block -tw-mt-1"
+            role="menu"
+          >
+            <div
+              class="tw-w-max tw-max-w-xs bg-button tw-flex tw-flex-col tw-cursor-pointer tw-border-solid tw-border tw-border-[#CCCCCC] tw-rounded-md tw-overflow-clip"
+            >
+              {#each leftOverEntries as [name, weight], li}
+                <div
+                  class="tw-text-white hover:tw-bg-[#00427C] tw-px-2 tw-py-1 tw-break-words"
+                  class:border-top={li != 0}
+                  on:click={() => {
+                    addNewCategory(name, weight);
+                    leftOverEntries = leftOverEntries.filter(
+                      (_, i) => i !== li,
+                    );
+                  }}
+                  role="menuitem"
+                  tabindex={0}
+                  on:keydown={(e) => {
+                    if (e.code == "Enter") {
+                      addNewCategory(name, weight);
+                      leftOverEntries = leftOverEntries.filter(
+                        (_, i) => i !== li,
+                      );
+                    }
+                  }}
+                >
+                  Add {name}, {weight}%
+                </div>
+              {/each}
+            </div>
+          </div>
+        </div>
+      {:else}
+        <button on:click={() => addNewCategory()} id="addCat" class="!tw-ml-0"
+          >Add new category</button
+        >
+      {/if}
+
       <button on:click={saveCategoryWeights} id="saveWeights"
         >Save category weights</button
       >

@@ -47,6 +47,12 @@ table.strikeable tr.exempt td.strikeable:after {
   z-index: 2000000;
 }
 
+.bg-button {
+  background-color: rgb(0, 102, 165);
+}
+
+
+
 table.strikeable tr.exempt {
   @apply !tw-text-gray-200 !tw-italic;
   background-color: #8B41B2;
