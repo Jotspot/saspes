@@ -30,6 +30,7 @@ import { getFinalPercent } from "./scoresUtilities";
 
 export enum Tools {
   CATEGORY_WEIGHTING = "CATEGORY_WEIGHTING",
+  EXPORT = "EXPORT",
   NONE = "NONE"
 }
 

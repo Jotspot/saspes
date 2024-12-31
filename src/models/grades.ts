@@ -92,6 +92,12 @@ export const formattedGrade = (grade: Grade) => {
   return grade;
 }
 
+export function getDisplayGradePercent(grade: Grade) {
+  if (!grade.startsWith("INC")) return `(${gradeToPercent[grade]}%)`;
+  if (grade == "INC_NO_CLASS_CREDIT") return `(No Class Credit)`;
+  return `(0%)`;
+}
+
 // Function to return gcd of a and b 
 function gcd(a: number, b: number): number {
   if (a == 0)
@@ -166,6 +172,11 @@ export class GradeManager {
     return this.assignments.filter((assignment) => assignment.category === category && (includeExempt || !assignment.exempt));
   }
 
+  /**
+   * 
+   * @param category the category to get the assignments from
+   * @returns an array of [Assignment, number] entries where the number is the index of the assignment in the assignments array
+   */
   public getAssignmentsByCategoryEntries(category: Category): [Assignment, number][] {
     return (this.assignments.map((a, i) => [a, i]) as [Assignment, number][]).filter((assignmentEntry) => assignmentEntry[0].category === category);
   }

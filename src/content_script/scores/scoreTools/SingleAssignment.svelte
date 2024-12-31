@@ -5,6 +5,7 @@
     Category,
     convertPercentCutoffToGrade,
     formattedGrade,
+    getDisplayGradePercent,
     GradeManager,
     gradeToPercent,
     listOfGrades,
@@ -146,12 +147,6 @@
       g: convertPercentCutoffToGrade(grade),
       p: grade,
     };
-  }
-
-  function getDisplayGradePercent(grade: Grade) {
-    if (!grade.startsWith("INC")) return `(${gradeToPercent[grade]}%)`;
-    if (grade == "INC_NO_CLASS_CREDIT") return `(No Class Credit)`;
-    return `(0%)`;
   }
 
   function onGradeChange(e: Event, i: number) {
@@ -524,6 +519,9 @@
 
 <div>
   {#if gradeManager.categories.length > 0}
+    <h1 class="!tw-mb-2 !tw-mt-3">
+      Category Weighting and Advanced See All Possibilities
+    </h1>
     <!-- CATEGORY WEIGHTING -->
     <button id="helpBtn" class="!tw-ml-0"
       >Tutorial (click to start guided tour and interactive explanation) <b

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Tools } from ".";
   import type { GradeManager } from "../../models/grades";
+  import Export from "./scoreTools/Export.svelte";
   import SingleAssignment from "./scoreTools/SingleAssignment.svelte";
 
   let curTool: Tools = Tools.CATEGORY_WEIGHTING;
@@ -20,15 +21,35 @@
       >
         <div>
           <h1 class="tw-pb-2 tw-text-2xl">Tools</h1>
-          <select
-            bind:value={curTool}
-            class="tw-rounded-md tw-border-[#CCCCCC] tw-border-solid tw-border tw-p-1"
-          >
-            <option value={Tools.CATEGORY_WEIGHTING}
-              >Category Weighting and Advanced See All Possibilities</option
-            >
-            <option value={Tools.NONE}>None</option>
-          </select>
+          <div class="tw-flex tw-flex-col tw-gap-1">
+            <label>
+              <input
+                type="radio"
+                value={Tools.CATEGORY_WEIGHTING}
+                bind:group={curTool}
+                name="pestool"
+              />
+              Category Weighting and Advanced See All Possibilities
+            </label>
+            <label>
+              <input
+                type="radio"
+                value={Tools.EXPORT}
+                bind:group={curTool}
+                name="pestool"
+              />
+              Export Customizable Grades
+            </label>
+            <label>
+              <input
+                type="radio"
+                value={Tools.NONE}
+                bind:group={curTool}
+                name="pestool"
+              />
+              None
+            </label>
+          </div>
         </div>
 
         {#if curTool == Tools.CATEGORY_WEIGHTING}
@@ -37,6 +58,8 @@
             {gradeManager}
             leftOverEntries={leftOverE}
           />
+        {:else if curTool == Tools.EXPORT}
+          <Export {gradeManager} {finalPercent} />
         {/if}
         <p>
           <span class="tw-font-bold"
