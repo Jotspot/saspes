@@ -24,6 +24,7 @@
 
 import Home from "./Home.svelte";
 
+import { gt } from "semver";
 
 
 if (document.getElementById("pes-box")) {
@@ -39,3 +40,18 @@ document
 
 new Home({ target: target as Element });
 
+
+fetch("https://anvaymathur.com/saspes/curversion.txt").then((res) => res.text()).then((text) => {
+  if (gt(text, SAS_PES_VERSION.split(" ")[0])) {
+    alert(`A new version of SAS PES is available. The latest version is ${text}. Your version is ${SAS_PES_VERSION}. 
+      
+Update by deleting the extension and installing the latest version from the Chrome Web Store:
+
+https://chromewebstore.google.com/detail/sas-powerschool-enhanceme/ehnkngeidilnoabcjjimkomcggndbhnk
+
+Or, you can wait a few days for the update to be automatically installed.
+
+If you have installed manually via ZIP, delete the extension and use these instructions to install the latest version:
+https://anvaymathur.com/saspes/custom.html`);
+  }
+});
