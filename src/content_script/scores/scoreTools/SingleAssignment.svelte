@@ -494,11 +494,11 @@
     });
 
     let doneTour = (
-      (await browser.storage.local.get("doneTour")) as { doneTour: boolean }
+      (await browser.storage.local.get("doneTour10")) as { doneTour: boolean }
     ).doneTour;
 
     tour.on("complete", () => {
-      browser.storage.local.set({ doneTour: true });
+      browser.storage.local.set({ doneTour10: true });
     });
 
     if (!doneTour) {
