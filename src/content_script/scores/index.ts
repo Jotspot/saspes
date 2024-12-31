@@ -142,6 +142,7 @@ const doScoreTools = async () => {
   saved.drop = savedDrop["drop" + key] || {};
 
   let leftOver: Record<string, { weight: number, dropLowest: number }> = {};
+
   for (let category in saved.weights) {
     if (saved.weights[category] || saved.drop[category]) {
       leftOver[category] = { weight: saved.weights[category] ?? 0, dropLowest: saved.drop[category] ?? 0 };
