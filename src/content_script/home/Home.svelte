@@ -1,7 +1,7 @@
 <script lang="ts">
   /**
    *
-   * @copyright Copyright (c) 2023-2024 Anvay Mathur <contact@anvaymathur.com>
+   * @copyright Copyright (c) 2023-2025 Anvay Mathur <contact@anvaymathur.com>
    *
    * @author Anvay Mathur <contact@anvaymathur.com>
    *
@@ -26,8 +26,8 @@
   import { onMount } from "svelte";
   import browser from "webextension-polyfill";
 
-  import sanitizeHtml from "sanitize-html";
   import { marked } from "marked";
+  import sanitizeHtml from "sanitize-html";
 
   let board: string | null = null;
 
@@ -91,7 +91,7 @@
     <p class="tw-text-sm" id="boardText">{@html htmlT}</p>
   {/if}
   <p class="tw-mt-2">
-    Copyright &copy; 2024 Anvay Mathur and the SAS PES Authors
+    Copyright &copy; 2025 Anvay Mathur and the SAS PES Authors
   </p>
 </div>
 

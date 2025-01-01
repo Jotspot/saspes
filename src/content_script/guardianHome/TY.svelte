@@ -3,7 +3,7 @@
 </script>
 
 <div
-  class="tw-group tw-relative tw-inline-block tw-font-normal tw-pl-2"
+  class="tw-group tw-relative tw-inline-block tw-font-normal tw-pl-2 pes-ty"
   bind:clientWidth={wd}
 >
   <button class="tw-ml-0">?</button>

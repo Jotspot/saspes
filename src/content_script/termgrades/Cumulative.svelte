@@ -1,44 +1,40 @@
 <script lang="ts">
-  import { formattedGrade, listOfGrades } from "../..//models/grades";
+  import type { Writable } from "svelte/store";
   import { gradeToGPA, type ClassManager } from "../../models/classes";
+  import { formattedGrade, listOfGrades } from "../../models/grades";
 
   export let classManager: ClassManager;
-
-  $: sem1GPA = classManager.calculateSemGPA(1);
-  $: sem2GPA = classManager.calculateSemGPA(2);
+  export let hideGPA: Writable<boolean>;
 
   let editGrades = false;
-  let hideGPA = true;
+
+  $: GPA = classManager.calculateCumGPA();
 </script>
 
-<div id="pes-gpa">
-  <label class="tw-flex tw-items-center tw-gap-2 tw-mb-2">
-    <input type="checkbox" class="!tw-m-0" bind:checked={hideGPA} />
+<div id="pes-cum" class="tw-mb-6 -tw-mt-2">
+  <label
+    class="tw-flex tw-items-center tw-gap-2 tw-mb-2"
+    style="margin-left: 10px;"
+  >
+    <input type="checkbox" class="!tw-m-0" bind:checked={$hideGPA} />
     Hide GPA
   </label>
 
   <p class="tw-font-bold">Do not rely on any data from SAS PES!!</p>
 
-  {#if !hideGPA}
-    <p class="tw-mb-2">
-      Go to the "Grade History" tab to view your overall cumulative GPA and GPA
-      for every semester in HS.
+  {#if !$hideGPA}
+    <p>
+      <span class="tw-font-bold">SAS PES Cumulative GPA: </span>{GPA == -1
+        ? "N/A"
+        : GPA.toFixed(2)}
     </p>
-    {#if typeof sem1GPA === "number" && sem1GPA !== -1}
-      <p>First Semester GPA: {classManager.calculateSemGPA(1).toFixed(2)}</p>
-    {:else}
-      <p>First Semester GPA: N/A</p>
-    {/if}
 
-    {#if typeof sem2GPA === "number" && sem2GPA !== -1}
-      <p>Second Semester GPA: {classManager.calculateSemGPA(2).toFixed(2)}</p>
-    {:else}
-      <p>Second Semester GPA: N/A</p>
-    {/if}
-
-    <label class="tw-flex tw-items-center tw-gap-2 tw-mb-2">
+    <label
+      class="tw-flex tw-items-center tw-gap-2 tw-mb-2"
+      style="margin-left: 10px;"
+    >
       <input type="checkbox" class="!tw-m-0" bind:checked={editGrades} />
-      Edit grades for GPA calculation
+      Edit grades for cumulative GPA calculation
     </label>
 
     {#if editGrades}
@@ -46,9 +42,13 @@
         Note: Semester classes count as 0.5 credit for GPA calculation like
         normal year-long classes.
       </p>
-      <table class="!tw-w-auto grid zebra tw-mb-4">
+      <table
+        class="!tw-w-auto grid zebra tw-mb-4"
+        style="margin-left: 20px !important;"
+      >
         <thead>
           <th> Class </th>
+          <th> Term </th>
           <th> S1 Grade </th>
           <th> S2 Grade </th>
           <th> Credits </th>
@@ -58,7 +58,8 @@
           {#each classManager.classes as c, i}
             <tr>
               <td class="tw-align-middle"> {c.name} </td>
-              <td class="tw-align-middle">
+              <td class="tw-align-middle"> {c.term}</td>
+              <td>
                 <select
                   class="tw-rounded-md tw-h-full tw-border-[#CCCCCC] tw-border-solid tw-border tw-p-1"
                   bind:value={classManager.classes[i].grade.s1}

@@ -48,14 +48,14 @@
 <div>
   <h1 class="!tw-mb-2 !tw-mt-3">Export Customizable Grades</h1>
   <p>
-    This tool allows you to export your grades to a Google Spreadsheet,
-    containing all the weightings for assignments and categories.<b
+    This tool allows you to vivaciously export your grades to a Google
+    Spreadsheet, containing all the weightings for assignments and categories.<b
       >All the data comes from the "Category Weighting and Advanced See All
       Possibilities" tool.</b
     > So, you can modify the category weightings and assignments. This tool is built
-    for final exam week when PowerSchool is closed so you can remember your grades.
-    This will exist until I feel like creating an in-extension solution to storing
-    your data.
+    for final exam week when PowerSchool is closed so you can vividly remember your
+    grades then. This will exist until I feel like creating an in-extension solution
+    to storing your data.
   </p>
   <button on:click={exportGrades}>Copy spreadsheet data to clipboard</button>
   <p>

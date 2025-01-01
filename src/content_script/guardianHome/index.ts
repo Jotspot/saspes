@@ -1,6 +1,6 @@
 /**
  *
- * @copyright Copyright (c) 2023-2024 Anvay Mathur <contact@anvaymathur.com>
+ * @copyright Copyright (c) 2023-2025 Anvay Mathur <contact@anvaymathur.com>
  *
  * @author Anvay Mathur <contact@anvaymathur.com>
  *
@@ -33,6 +33,9 @@ if (document.getElementById("pes-gpa")) {
   document.getElementById("pes-gpa")?.remove();
 }
 
+if (document.querySelectorAll(".pes-ty").length > 0) {
+  document.querySelectorAll(".pes-ty").forEach((e) => e.remove());
+}
 
 const classManager = new ClassManager([]);
 

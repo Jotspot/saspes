@@ -1,6 +1,6 @@
 /**
  *
- * @copyright Copyright (c) 2023-2024 Anvay Mathur <contact@anvaymathur.com>
+ * @copyright Copyright (c) 2023-2025 Anvay Mathur <contact@anvaymathur.com>
  *
  * @author Anvay Mathur <contact@anvaymathur.com>
  *
@@ -22,11 +22,11 @@
  *
  */
 import { crx } from "@crxjs/vite-plugin";
-import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import 'dotenv/config';
+import { defineConfig } from "vite";
 import manifest, { realVersion } from "./manifest.config.js";
 import pkg from "./package.json";
-import 'dotenv/config'
 
 
 

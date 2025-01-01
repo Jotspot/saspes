@@ -1,6 +1,6 @@
-import { defineManifest } from '@crxjs/vite-plugin'
-import packageJson from './package.json'
-import 'dotenv/config'
+import { defineManifest } from '@crxjs/vite-plugin';
+import 'dotenv/config';
+import packageJson from './package.json';
 const { version } = packageJson
 
 
@@ -47,6 +47,12 @@ export default defineManifest(async (env) => ({
         "https://powerschool.sas.edu.sg/guardian/home.html*"
       ],
       "js": ["src/content_script/guardianHome/index.ts"]
+    },
+    {
+      "matches": [
+        "https://powerschool.sas.edu.sg/guardian/termgrades.html*"
+      ],
+      "js": ["src/content_script/termgrades/index.ts"]
     }
   ],
   "options_ui": {
