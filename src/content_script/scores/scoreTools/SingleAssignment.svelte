@@ -494,8 +494,9 @@
     });
 
     let doneTour = (
-      (await browser.storage.local.get("doneTour10")) as { doneTour: boolean }
-    ).doneTour;
+      (await browser.storage.local.get("doneTour10")) as { doneTour10: boolean }
+    ).doneTour10;
+    console.log(doneTour);
 
     tour.on("complete", () => {
       browser.storage.local.set({ doneTour10: true });
