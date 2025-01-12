@@ -1,7 +1,7 @@
 <script lang="ts">
   /**
    *
-   * @copyright Copyright (c) 2023-2024 Anvay Mathur <contact@anvaymathur.com>
+   * @copyright Copyright (c) 2023-2025 Anvay Mathur <contact@anvaymathur.com>
    *
    * @author Anvay Mathur <contact@anvaymathur.com>
    *
@@ -24,7 +24,7 @@
    */
 </script>
 
-<div class="tw-px-8 tw-py-4 tw-w-96">
+<div class="tw-px-8 tw-py-4 tw-w-96" id="root">
   <h1 class="tw-font-bold tw-text-2xl tw-pb-2">
     SAS PowerSchool Enhancement Suite
   </h1>
@@ -32,6 +32,18 @@
   <p>v{SAS_PES_VERSION}</p>
 
   <p class="tw-mt-2">
-    Copyright &copy; 2024 Anvay Mathur and the SAS PES Authors
+    Copyright &copy; 2025 Anvay Mathur and the SAS PES Authors
   </p>
 </div>
+
+<style>
+  #root {
+    font-family: system-ui, sans-serif;
+  }
+
+  @supports (-moz-appearance: none) {
+    #root {
+      font-size: 75%;
+    }
+  }
+</style>

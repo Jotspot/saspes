@@ -1,6 +1,6 @@
 /**
  *
- * @copyright Copyright (c) 2023-2024 Anvay Mathur <contact@anvaymathur.com>
+ * @copyright Copyright (c) 2023-2025 Anvay Mathur <contact@anvaymathur.com>
  *
  * @author Anvay Mathur <contact@anvaymathur.com>
  *
@@ -22,15 +22,33 @@
  *
  */
 
-import { Assignment, Category, GradeManager, listOfGrades, type Grade, gradeToPercent } from "../../models/grades";
+import browser from "webextension-polyfill";
+import { Assignment, Category, GradeManager, listOfGrades, type Grade } from "../../models/grades";
 import FinalPercent from "./FinalPercent.svelte";
 import ScoreTools from "./ScoreTools.svelte";
 import { getFinalPercent } from "./scoresUtilities";
 
 export enum Tools {
   CATEGORY_WEIGHTING = "CATEGORY_WEIGHTING",
+  EXPORT = "EXPORT",
   NONE = "NONE"
 }
+
+const url = new URL(window.location.href);
+
+let finalPercent = getFinalPercent(
+  url.searchParams.get(
+    "frn",
+  )!,
+  url.searchParams.get("fg")!
+);
+
+async function getFinalGrade(): Promise<string> {
+  await waitForElm("div.box-round > table > tbody > tr > td:nth-child(4)");
+  return document.querySelector("div.box-round > table > tbody > tr > td:nth-child(4)")?.textContent?.trim()!;
+}
+
+let finalGrade = getFinalGrade();
 
 function waitForElm(selector: string): Promise<Element | null> {
   return new Promise(resolve => {
@@ -52,17 +70,22 @@ function waitForElm(selector: string): Promise<Element | null> {
   });
 }
 
-
-let gradeManagerO = new GradeManager([], [], 100);
+console.log(document.getElementById("pes-fp"));
+if (document.getElementById("pes-fp") || document.getElementById("pes-st")) {
+  document.getElementById("pes-fp")?.remove();
+  document.getElementById("pes-st")?.remove();
+}
+console.log(document.getElementById("pes-fp"));
+let gradeManagerO = new GradeManager([], []);
 
 const doScoreTools = async () => {
   await waitForElm("#scoreTable");
-  const gradeManager = new GradeManager([], [], 100);
+  const gradeManager = new GradeManager([], []);
   const rowEles = document.querySelectorAll("tr.ng-scope");
 
   for (let i = 0; i < rowEles.length; i++) {
     let rowEle = rowEles[i];
-    if (rowEle.querySelector("td.codeCol > div.tt-exempt") != null || rowEle.querySelector("td.codeCol > div.tt-excluded") != null) {
+    if (rowEle.querySelector("td.codeCol > div.tt-excluded") != null) {
       console.log(rowEle); continue;
     };
 
@@ -78,6 +101,11 @@ const doScoreTools = async () => {
           validGrade = true;
           grade = listOfGrades[i];
         }
+        if (gradeEle.textContent.trim() == "INC" && await finalGrade == "INC") {
+          grade = "INC_NO_CLASS_CREDIT";
+        } else if (gradeEle.textContent.trim() == "INC") {
+          grade = "INC_NO_CREDIT";
+        }
       }
       if (!validGrade) {
         console.log(rowEle); continue;
@@ -88,12 +116,15 @@ const doScoreTools = async () => {
         gradeManager.addCategory(category);
       }
 
-      let weighting = 100;
+      let weighting = 9;
       if (scoreEle.classList.contains("hasWeight") && scoreEle.title) {
-        weighting = Number(scoreEle.title.match(/x ([^ ]*)\. /)![1]) * 100;
+
+        weighting = Number(scoreEle.textContent?.trim().match(/\([^\/]+\/([^\)]+)\)/)![1]);
+      } else if (scoreEle.textContent) {
+        weighting = Number(scoreEle.textContent?.trim().split("/")[1]);
       }
 
-      let assignment = new Assignment(assignmentEle.textContent.trim(), grade, category, weighting);
+      let assignment = new Assignment(assignmentEle.textContent.trim(), grade, category, weighting, rowEle.querySelector("td.codeCol > div.tt-exempt") != null ? true : false);
       gradeManager.addAssignment(assignment);
     }
   }
@@ -104,27 +135,34 @@ const doScoreTools = async () => {
     "fg",
   );
 
-  const saved = await chrome.storage.local.get("weights" + key);
+  const saved = await browser.storage.local.get("weights" + key);
+  const savedDrop = await browser.storage.local.get("drop" + key);
 
   saved.weights = saved["weights" + key] || {};
+  saved.drop = savedDrop["drop" + key] || {};
 
-  for (let category of gradeManager.categories) {
-    if (saved.weights[category.name]) {
-      category.weight = Number(saved.weights[category.name]);
+  let leftOver: Record<string, { weight: number, dropLowest: number }> = {};
+
+  for (let category in saved.weights) {
+    if (saved.weights[category] || saved.drop[category]) {
+      leftOver[category] = { weight: saved.weights[category] ?? 0, dropLowest: saved.drop[category] ?? 0 };
     }
   }
 
-  let totalWeight = await chrome.storage.local.get("totalWeight" + key);
-  totalWeight = totalWeight["totalWeight" + key] || 0;
-  if (Number(totalWeight) > 0) {
-    gradeManager.totalWeight = Number(totalWeight);
+  for (let category of gradeManager.categories) {
+    if (category.name in leftOver) {
+      category.weight = Number(leftOver[category.name].weight);
+      category.dropLowest = Number(leftOver[category.name].dropLowest);
+      delete leftOver[category.name];
+    }
   }
+
 
   console.log(gradeManager);
   gradeManagerO = gradeManager;
   new ScoreTools({
     target: target as Element,
-    props: { finalPercent, gradeManager: gradeManagerO }
+    props: { finalPercent, gradeManager: gradeManagerO, leftOver }
   })
 }
 
@@ -136,14 +174,7 @@ document
   .querySelector(".box-round")!
   .insertBefore(target, document.querySelector(".box-round > p"));
 
-const url = new URL(window.location.href);
 
-let finalPercent = getFinalPercent(
-  url.searchParams.get(
-    "frn",
-  )!,
-  url.searchParams.get("fg")!
-);
 
 new FinalPercent({
   target: target as Element,

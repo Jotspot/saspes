@@ -1,6 +1,6 @@
 /**
  *
- * @copyright Copyright (c) 2023-2024 Anvay Mathur <contact@anvaymathur.com>
+ * @copyright Copyright (c) 2023-2025 Anvay Mathur <contact@anvaymathur.com>
  *
  * @author Anvay Mathur <contact@anvaymathur.com>
  *
@@ -32,14 +32,23 @@ import pkg from "./package.json";
 
 
 export default defineConfig({
+  server: {
+    port: 5173,
+    strictPort: true,
+    hmr: {
+      port: 5173,
+    },
+  },
   plugins: [
     svelte(),
     crx({
-      manifest: manifest()
+      manifest: manifest(),
+      browser: (process.argv.includes("BUILD_MODE_firefox") ? "firefox" : "chrome"),
     }),
 
   ],
   define: {
-    SAS_PES_VERSION: `"${process.argv[4] === "production" ? pkg.version : `${pkg.version} Development Build ${realVersion}`}"`,
+    SAS_PES_VERSION: `"${process.argv.includes("SAS_PES_production") ? pkg.version : `${pkg.version} Development Build ${realVersion}`}"`,
   },
 });
+

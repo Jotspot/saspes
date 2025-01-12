@@ -1,6 +1,6 @@
 /**
  *
- * @copyright Copyright (c) 2023-2024 Anvay Mathur <contact@anvaymathur.com>
+ * @copyright Copyright (c) 2023-2025 Anvay Mathur <contact@anvaymathur.com>
  *
  * @author Anvay Mathur <contact@anvaymathur.com>
  *
@@ -34,7 +34,8 @@ export const gradeToGPA = {
   "D+": 1.5,
   D: 1,
   F: 0,
-  INC: 0,
+  INC_NO_CLASS_CREDIT: 0,
+  INC_NO_CREDIT: 0,
 } as const;
 
 export class ClassManager {
@@ -46,17 +47,34 @@ export class ClassManager {
 
   public getTotalCredits(semester: 1 | 2): number {
     return this.classes.reduce((acc, cur) => {
-      if (cur.grade[`s${semester}`] !== null && cur.grade[`s${semester}`] !== "INC") return acc + cur.credits;
+      if (cur.grade[`s${semester}`] !== null && cur.grade[`s${semester}`] !== "INC_NO_CLASS_CREDIT") return acc + cur.credits;
       return acc;
     }, 0);
   }
 
-  public calculateGPA(semester: 1 | 2): number {
+  public calculateCumGPA(): number {
+    let gpa = 0;
+    let totalCredits = this.getTotalCredits(1) + this.getTotalCredits(2);
+    if (totalCredits === 0) return -1;
+    for (const c of this.classes) {
+      if (c.grade.s1 === "INC_NO_CLASS_CREDIT") {
+        continue;
+      }
+      if (c.grade.s2 === "INC_NO_CLASS_CREDIT") {
+        continue;
+      }
+      if (c.grade.s1 !== null) gpa += (gradeToGPA[c.grade.s1] + (c.isBoosted ? 0.5 : 0)) * c.credits;
+      if (c.grade.s2 !== null) gpa += (gradeToGPA[c.grade.s2] + (c.isBoosted ? 0.5 : 0)) * c.credits;
+    }
+    return gpa / totalCredits;
+  }
+
+  public calculateSemGPA(semester: 1 | 2): number {
     let gpa = 0;
     let totalCredits = this.getTotalCredits(semester);
     if (totalCredits === 0) return -1;
     for (const c of this.classes) {
-      if (c.grade[`s${semester}`] === "INC") {
+      if (c.grade[`s${semester}`] === "INC_NO_CLASS_CREDIT") {
         continue;
       }
       if (c.grade[`s${semester}`] !== null) gpa += (gradeToGPA[c.grade[`s${semester}`]!] + (c.isBoosted ? 0.5 : 0)) * c.credits;
@@ -79,19 +97,24 @@ export class Class {
     s2: Grade | null
   };
   public isBoosted: boolean;
+  public term: string | null;
 
-  constructor(name: string, grade: { s1: Grade | null, s2: Grade | null }) {
+  constructor(name: string, grade: { s1: Grade | null, s2: Grade | null }, credits: number | null = null, term: string | null = null) {
     this.id = Class.nextId++;
     this.name = name;
     this.grade = grade;
     this.isBoosted = name.includes("AP ") || name.includes("AT ");
-
-    if (name.includes("English 10/American History") || name.includes("English 9/World History")) {
-      this.credits = 2;
-    } else if (/^(I Service: |IS: )/.test(name)) {
-      this.credits = 0.5;
+    this.term = term;
+    if (credits !== null) {
+      this.credits = credits;
     } else {
-      this.credits = 1;
+      if (name.includes("English 10/American History") || name.includes("English 9/World History")) {
+        this.credits = 1;
+      } else if (/^(I Service: |IS: )/.test(name)) {
+        this.credits = 0.25;
+      } else {
+        this.credits = 0.5;
+      }
     }
   }
 }

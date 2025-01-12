@@ -1,6 +1,6 @@
 /**
  *
- * @copyright Copyright (c) 2023-2024 Anvay Mathur <contact@anvaymathur.com>
+ * @copyright Copyright (c) 2023-2025 Anvay Mathur <contact@anvaymathur.com>
  *
  * @author Anvay Mathur <contact@anvaymathur.com>
  *
@@ -22,13 +22,14 @@
  *
  */
 
+import browser from "webextension-polyfill";
 import "../app.css";
 import Options from "./Options.svelte";
 
 const target = document.getElementById("app");
 
 async function render() {
-  const { count } = await chrome.storage.sync.get({ count: 0 });
+  const { count } = await browser.storage.sync.get({ count: 0 });
 
   new Options({ target: target as Element });
 }

@@ -1,6 +1,6 @@
 /**
  *
- * @copyright Copyright (c) 2023-2024 Anvay Mathur <contact@anvaymathur.com>
+ * @copyright Copyright (c) 2023-2025 Anvay Mathur <contact@anvaymathur.com>
  *
  * @author Anvay Mathur <contact@anvaymathur.com>
  *
@@ -23,9 +23,19 @@
  */
 
 import { Class, ClassManager } from "../../models/classes";
-import GPA from "./GPA.svelte";
-import { listOfGrades, type Grade } from "../../models/grades";
+import { convertPercentCutoffToGrade, listOfGrades, type Grade } from "../../models/grades";
 import { getFinalPercent } from "../scores/scoresUtilities";
+import GPA from "./GPA.svelte";
+import Ty from "./TY.svelte";
+
+
+if (document.getElementById("pes-gpa")) {
+  document.getElementById("pes-gpa")?.remove();
+}
+
+if (document.querySelectorAll(".pes-ty").length > 0) {
+  document.querySelectorAll(".pes-ty").forEach((e) => e.remove());
+}
 
 const classManager = new ClassManager([]);
 
@@ -53,10 +63,16 @@ for (const row of rows) {
 
   let s1Grade: string | null = s1GradeEle?.textContent?.trim()!;
 
+  if (s1Grade?.endsWith(")")) continue;
+
+  if (s1Grade == "INC") s1Grade = "INC_NO_CLASS_CREDIT";
   if (!listOfGrades.includes(s1Grade as Grade)) s1Grade = null;
 
   let s2Grade: string | null = s2GradeEle?.textContent?.trim()!;
 
+  if (s2Grade?.endsWith(")")) continue;
+
+  if (s2Grade == "INC") s2Grade = "INC_NO_CLASS_CREDIT";
   if (!listOfGrades.includes(s2Grade as Grade)) s2Grade = null;
 
   if (!s1Grade && !s2Grade) {
@@ -76,8 +92,12 @@ for (const row of rows) {
 
     finalPercent.then((f) => {
       console.log(f, "F");
-      if (f !== null)
+      if (f !== null) {
         s1GradeEle.innerHTML += ` (${f.toFixed(2)})`;
+        if (convertPercentCutoffToGrade(f) !== s1Grade) {
+          new Ty({ target: s1GradeEle })
+        }
+      }
     })
   } else {
     console.log("Not finding S1 final percent for ", nameEle, row);
@@ -95,8 +115,12 @@ for (const row of rows) {
 
     finalPercent.then((f) => {
       console.log(f, "S2");
-      if (f !== null)
+      if (f !== null) {
         s2GradeEle.innerHTML += ` (${f.toFixed(2)})`;
+        if (convertPercentCutoffToGrade(f) !== s2Grade) {
+          new Ty({ target: s2GradeEle })
+        }
+      }
     })
   } else {
     console.log("Not finding S2 final percent for ", nameEle, row);

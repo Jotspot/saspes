@@ -1,7 +1,7 @@
 <script lang="ts">
   /**
    *
-   * @copyright Copyright (c) 2023-2024 Anvay Mathur <contact@anvaymathur.com>
+   * @copyright Copyright (c) 2023-2025 Anvay Mathur <contact@anvaymathur.com>
    *
    * @author Anvay Mathur <contact@anvaymathur.com>
    *
@@ -24,14 +24,16 @@
    */
 
   import { onMount } from "svelte";
-  import { browserAction } from "webextension-polyfill";
   import browser from "webextension-polyfill";
+
+  import { marked } from "marked";
+  import sanitizeHtml from "sanitize-html";
 
   let board: string | null = null;
 
   onMount(() => {
     document.getElementById("container")!.style.paddingBottom = "20px";
-    document.getElementById("branding-district")!.remove();
+    document.getElementById("branding-district")?.remove();
     try {
       fetch("https://anvaymathur.com/saspes/board.txt", { mode: "cors" })
         .then((e) => e.text())
@@ -40,6 +42,15 @@
       board = "Error while fetching board.";
     }
   });
+
+  let htmlT = "";
+
+  $: if (board) {
+    htmlT = sanitizeHtml(marked.parse(board.split("æ")[1]) as string, {
+      allowedTags: ["b", "p", "i", "em", "strong"],
+      allowedAttributes: {},
+    });
+  }
 </script>
 
 <div class="tw-px-8 tw-py-8 tw-mt-6" id="pes-box">
@@ -64,7 +75,7 @@
     <a
       href="#"
       on:click={() => {
-        chrome.runtime.sendMessage({ action: "openOptionsPage" });
+        browser.runtime.sendMessage({ action: "openOptionsPage" });
       }}>Options</a
     >
   </p>
@@ -77,10 +88,10 @@
     <h3 class="tw-font-medium tw-text-lg">
       Message Board ({board.split("æ")[0]}):
     </h3>
-    <p class="tw-text-sm">{@html board.split("æ")[1]}</p>
+    <p class="tw-text-sm" id="boardText">{@html htmlT}</p>
   {/if}
   <p class="tw-mt-2">
-    Copyright &copy; 2024 Anvay Mathur and the SAS PES Authors
+    Copyright &copy; 2025 Anvay Mathur and the SAS PES Authors
   </p>
 </div>
 
@@ -91,5 +102,9 @@
     -webkit-box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
     position: relative;
+  }
+
+  :global(#boardText p) {
+    margin-left: 0;
   }
 </style>
