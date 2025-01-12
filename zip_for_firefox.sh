@@ -1,0 +1,1 @@
+cd dist; zip -r -FS ../dist_firefox.zip * --exclude '*.git*'; cd ..; 
