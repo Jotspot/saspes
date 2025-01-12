@@ -47,8 +47,21 @@
 
   $: if (board) {
     htmlT = sanitizeHtml(marked.parse(board.split("æ")[1]) as string, {
-      allowedTags: ["b", "p", "i", "em", "strong"],
-      allowedAttributes: {},
+      allowedTags: [
+        "b",
+        "p",
+        "i",
+        "em",
+        "strong",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "a",
+      ],
+      allowedAttributes: { a: ["href"] },
     });
   }
 </script>
@@ -104,7 +117,15 @@
     position: relative;
   }
 
-  :global(#boardText p) {
-    margin-left: 0;
+  :global(#boardText p),
+  :global(#boardText h1),
+  :global(#boardText h2),
+  :global(#boardText h3),
+  :global(#boardText h4),
+  :global(#boardText h5),
+  :global(#boardText h6),
+  :global(#boardText strong),
+  :global(#boardText em) {
+    margin-left: 0 !important;
   }
 </style>
