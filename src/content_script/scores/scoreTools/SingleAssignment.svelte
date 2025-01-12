@@ -19,7 +19,10 @@
 
   export let finalPercent: number;
   export let gradeManager: GradeManager;
-  export let leftOverEntries: [string, number][];
+  export let leftOverEntries: [
+    string,
+    { weight: number; dropLowest: number },
+  ][];
 
   let curCategoryId: number;
 
@@ -33,8 +36,12 @@
     gradeManager = gradeManager;
   }
 
-  function addNewCategory(name: string = "New Category", weight: number = 0) {
-    let newCat = new Category(name, weight);
+  function addNewCategory(
+    name: string = "New Category",
+    weight: number = 0,
+    dropLowest: number = 0,
+  ) {
+    let newCat = new Category(name, weight, dropLowest);
     gradeManager.addCategory(newCat);
     addNewAssignment(newCat);
   }
@@ -63,7 +70,10 @@
       ...leftOverEntries,
       [
         gradeManager.categories[index].name,
-        gradeManager.categories[index].weight,
+        {
+          weight: gradeManager.categories[index].weight,
+          dropLowest: gradeManager.categories[index].dropLowest,
+        },
       ],
     ];
 
@@ -87,6 +97,18 @@
       : "a";
   }
 
+  /**
+   * Calculates the hypothetical grade based on the given parameters.
+   *
+   * @param {GradePercentage} hGrade - The hypothetical grade percentage.
+   * @param {number} hWeight - The weight of the hypothetical grade.
+   * @param {number} percent - The percentage value (unused in the function).
+   * @param {number} [curCatId=curCategoryId] - The current category ID, defaults to curCategoryId.
+   * @param {GradeManager} gradeManager - The grade manager instance.
+   * @returns {Object} An object containing the calculated grade and percentage.
+   * @returns {SpecialGrade | number} returns.g - The calculated grade or a special grade (INVALID or INC).
+   * @returns {number} returns.p - The calculated percentage.
+   */
   function calcHypoGrade(
     hGrade: GradePercentage,
     hWeight: number,
@@ -106,11 +128,30 @@
 
     let curCategoryGrade: number = 0;
     let curCategoryWeightSum: number = 0;
+
+    // non-see categories
     let otherGrade: number = 0;
     let otherWeightSum: number = 0;
 
     for (let category of gradeManager.categories) {
-      let curGrade = gradeManager.calculateCategoryGradePercentage(category.id);
+      let curGrade =
+        category.id == curCategoryId
+          ? GradeManager.calculateHypoGradePercentage(
+              [
+                ...gradeManager
+                  .getAssignmentsByCategory(category)
+                  .filter((a) => !a.see),
+                new Assignment(
+                  "hyp",
+                  convertPercentCutoffToGrade(hGrade),
+                  category,
+                  hWeight,
+                ),
+              ],
+              category.dropLowest,
+            )
+          : gradeManager.calculateCategoryGradePercentage(category.id);
+
       if (curGrade == SpecialGrade.INVALID) {
         return {
           g: SpecialGrade.INVALID,
@@ -125,22 +166,18 @@
       if (category.id == curCategoryId) {
         curCategoryGrade = curGrade;
         curCategoryWeightSum = gradeManager.sumOfWeightsInCategory(category);
-        continue;
+      } else {
+        otherWeightSum += category.weight;
+        otherGrade += curGrade * category.weight;
       }
-
-      otherWeightSum += category.weight;
-      otherGrade += curGrade * category.weight;
     }
     if (otherWeightSum != 0) otherGrade /= otherWeightSum;
-    curCategoryGrade *= curCategoryWeightSum;
 
     let totalWeight = gradeManager.getTotalWeight();
 
     grade =
       otherGrade * (otherWeightSum / totalWeight) +
-      ((curCategoryGrade + hGrade * hWeight) /
-        (hWeight + curCategoryWeightSum)) *
-        (curCategory.weight / totalWeight);
+      curCategoryGrade * (curCategory.weight / totalWeight);
 
     grade = Number(grade.toFixed(3));
     return {
@@ -173,10 +210,17 @@
     ) as GradePercentage;
   }
 
+  function onDropLowestChange(e: Event, i: number) {
+    const target = e.target as HTMLSelectElement;
+    gradeManager.categories[i].dropLowest = Number(target.value);
+  }
+
   function saveCategoryWeights() {
     let weights: Record<string, number> = {};
+    let drop: Record<string, number> = {};
     for (let category of gradeManager.categories) {
       weights[category.name] = category.weight;
+      drop[category.name] = category.dropLowest;
     }
 
     let key: string =
@@ -184,6 +228,8 @@
       new URL(location.href).searchParams.get("frn") +
       new URL(location.href).searchParams.get("fg");
     browser.storage.local.set({ ["weights" + key]: weights });
+
+    browser.storage.local.set({ ["drop" + key]: drop });
     alert("Saved weights.");
   }
 
@@ -252,7 +298,7 @@
     tour.addSteps([
       {
         id: "tour-1",
-        text: "Welcome to the category weighting tool! <b>This tool has changed in recent versions. It is recommended to go through this tour again.</b> This tool automatically adds all your assignments and their categories to the table below. Then, you add your category weightings to calculate your exact final percent. However, it is more useful for its ability to add new categories and assignments, as well as the ability to change grades and the see all possiblities feature, which will be shown later. <br/>This tour will help you get acquainted with the tool. It is <b>highly recommended</b> for new users.",
+        text: "Welcome to the category weighting tool! This tool helps you add and manage assignments and categories, calculate final percentages, and explore grade possibilities. This tour will guide you through its features. Highly recommended for new users.",
         attachTo: {
           element: "#catw",
           on: "top-start",
@@ -271,7 +317,7 @@
       },
       {
         id: "tour-2",
-        text: "This is the category weighting table. You can change the names of the categories (for better organization) and the weights of the categories here.<br/><br/>Categories can be class units (e.g. Unit 2), or different types of assignments (e.g. Summative) depending on how your teacher uses categories. Your category names can be found in PowerSchool as well as your syllabus. The syllabus will have more information that you need later, so refer to the syllabus more.",
+        text: "This table shows category names and weights. You can edit them here. Categories can be units or assignment types (e.g. Summative, Oral). They are defined in your syllabus.",
         attachTo: {
           element: "#cattable",
           on: "right",
@@ -294,13 +340,12 @@
           {
             text: "Next",
             action: () => {
-              if (isCatWeightsValid) {
-                tour.next();
-              } else {
+              if (!isCatWeightsValid) {
                 alert(
-                  "Please enter your VALID category weights. Remember that they must add up to the total weight you entered before.",
+                  "Remember to enter your valid category weights later! Remember that they must add up to the total weight you entered before. For now, we'll move on.",
                 );
               }
+              tour.next();
             },
           },
           {
@@ -310,8 +355,17 @@
         ],
       },
       {
+        id: "tour-3a",
+        text: 'Some classes drop the lowest grade in a category to give you a chance to improve. If your class does this, you can select the number of lowest grades to drop here. If your class does not do this, select "Do not drop any assignments." Behavior may be incorrect if the number of assignments dropped is higher than the number of assignments in the category as I\'m not sure how it should work in that case. This is better than exempt because it works with "See all possibilities."',
+        attachTo: {
+          element: ".firstDrop",
+          on: "right",
+        },
+        classes: "tw-ml-2 tw-w-96",
+      },
+      {
         id: "tour-4",
-        text: "You can click this to delete the category in the row. This will only work if there is more than one category.",
+        text: "Click here to delete the category. This only works if there is more than one category.",
         attachTo: {
           element: ".firstCatDel",
           on: "right",
@@ -320,7 +374,7 @@
       },
       {
         id: "tour-5",
-        text: "Click this to save your category weights. When you reload, the weights you inputted before clicking the save button will reappear, so you don't have to type them in again.",
+        text: "Click to save your category weights. Saved weights will reappear after reload. Categories you add will be saved with an option to add them back.",
         attachTo: {
           element: "#saveWeights",
           on: "bottom",
@@ -539,6 +593,7 @@
           <th>Category</th>
           {#if showSumOfInnerWeights}<th>Sum of Inner Weights</th>{/if}
           <th>Weight</th>
+          <th>Drop Lowest</th>
           <th></th>
         </tr>
       </thead>
@@ -579,6 +634,30 @@
               </div>
             </td>
             <td class="tw-text-center tw-align-middle">
+              <select
+                class:firstDrop={i == 0}
+                class="tw-rounded-md tw-h-full tw-border-[#CCCCCC] tw-border-solid tw-border tw-p-1"
+                on:change={(e) => {
+                  onDropLowestChange(e, i);
+                }}
+              >
+                <option
+                  value={0}
+                  selected={gradeManager.categories[i].dropLowest == 0}
+                >
+                  Do not drop any assignments
+                </option>
+                {#each [1, 2, 3, 4, 5] as num}
+                  <option
+                    value={num}
+                    selected={num == gradeManager.categories[i].dropLowest}
+                  >
+                    Drop {num} lowest assignment{num > 1 ? "s" : ""}
+                  </option>
+                {/each}
+              </select>
+            </td>
+            <td class="tw-text-center tw-align-middle">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -615,11 +694,27 @@
       {#if leftOverEntries.length > 0}
         <div class="tw-relative tw-group tw-inline-block">
           <button
-            class="!tw-ml-0"
-            on:click={() => addNewCategory()}
+            class="!tw-ml-0 tw-inline-flex tw-flex-row tw-items-center bg-button-hover tw-cursor-context-menu"
             role="menu"
           >
-            Add new category
+            <span
+              class="tw-inline-flex tw-items-center tw-justify-center tw-gap-1"
+              ><span>Add category</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2.25"
+                stroke="currentColor"
+                style="width: 12px;"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                />
+              </svg>
+            </span>
           </button>
 
           <div
@@ -629,12 +724,29 @@
             <div
               class="tw-w-max tw-max-w-xs bg-button tw-flex tw-flex-col tw-cursor-pointer tw-border-solid tw-border tw-border-[#CCCCCC] tw-rounded-md tw-overflow-clip"
             >
-              {#each leftOverEntries as [name, weight], li}
+              <div
+                class="tw-text-white hover:tw-bg-[#00427C] tw-px-2 tw-py-1 tw-break-words tw-border-b tw-border-b-[#CCCCCC]"
+                style="border-bottom-style: solid;"
+                role="menuitem"
+                tabindex={0}
+                on:click={() => addNewCategory()}
+                on:keydown={(e) => {
+                  if (e.code == "Enter") addNewCategory();
+                }}
+              >
+                Add new category
+              </div>
+              <span
+                class="tw-font-bold tw-text-white tw-break-words tw-px-2 tw-py-1 tw-cursor-default"
+              >
+                Restore previously added categories
+              </span>
+              {#each leftOverEntries as [name, x], li}
                 <div
                   class="tw-text-white hover:tw-bg-[#00427C] tw-px-2 tw-py-1 tw-break-words"
                   class:border-top={li != 0}
                   on:click={() => {
-                    addNewCategory(name, weight);
+                    addNewCategory(name, x.weight, x.dropLowest);
                     leftOverEntries = leftOverEntries.filter(
                       (_, i) => i !== li,
                     );
@@ -643,14 +755,15 @@
                   tabindex={0}
                   on:keydown={(e) => {
                     if (e.code == "Enter") {
-                      addNewCategory(name, weight);
+                      addNewCategory(name, x.weight, x.dropLowest);
                       leftOverEntries = leftOverEntries.filter(
                         (_, i) => i !== li,
                       );
                     }
                   }}
                 >
-                  Add {name}, {weight}%
+                  Add {name}{#if x.weight > 0}, {x.weight}%
+                  {/if}{#if x.dropLowest > 0}, drop {x.dropLowest} lowest{/if}
                 </div>
               {/each}
             </div>
@@ -895,6 +1008,13 @@
               {/each}
             </tbody>
           </table>
+          {#if seeAssignment.category.dropLowest > 0}
+            <p class="!tw-mt-2">
+              Note: with a "See all possibilities" assignment, the indication of
+              which assignment is being dropped will be inaccurate as it depends
+              on the actual grade of the "See all possibilities" assignment.
+            </p>
+          {/if}
         {/if}
       </div>
       <hr />

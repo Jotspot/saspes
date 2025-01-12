@@ -24,6 +24,10 @@
 
   {#if !$hideGPA}
     <p>
+      This mode allows you to view your cumulative GPA and reshape your grades
+      to see hypothetical versions of your cumulative GPA.
+    </p>
+    <p>
       <span class="tw-font-bold">SAS PES Cumulative GPA: </span>{GPA == -1
         ? "N/A"
         : GPA.toFixed(2)}

@@ -7,7 +7,7 @@
   let curTool: Tools = Tools.CATEGORY_WEIGHTING;
   export let finalPercent: Promise<number | null>;
   export let gradeManager: GradeManager;
-  export let leftOver: Record<string, number>;
+  export let leftOver: Record<string, { weight: number; dropLowest: number }>;
 
   $: leftOverE = Object.entries(leftOver);
 </script>
@@ -64,7 +64,7 @@
         <p>
           <span class="tw-font-bold"
             >Do not rely on any data from SAS PES!!</span
-          >
+          ><br />
           Teachers can override your final grade, and calculations can be not entirely
           accurate.
         </p>

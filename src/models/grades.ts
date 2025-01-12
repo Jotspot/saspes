@@ -168,8 +168,76 @@ export class GradeManager {
     this.assignments = assignments;
   }
 
-  public getAssignmentsByCategory(category: Category, includeExempt: boolean = true): Assignment[] {
-    return this.assignments.filter((assignment) => assignment.category === category && (includeExempt || !assignment.exempt));
+  public isAssignmentDropped(assignment: Assignment): boolean {
+    // only remove exempt assignments, not dropped assignments. so we must do a custom filter
+    let categoryAssignments = this.getAssignmentsByCategory(assignment.category).filter(a => !a.exempt).sort((a, b) => gradeToPercent[a.grade] - gradeToPercent[b.grade]);
+
+    // the actual limit to how many assignments to drop
+    let limit = (categoryAssignments.length <= assignment.category.dropLowest ? categoryAssignments.length - 1 : assignment.category.dropLowest);
+
+    for (let i = 0; i < limit; i++) {
+      if (categoryAssignments[i].see) {
+        // increase the limit because we skip this assignment. this is hack, the actual limit doesn't increase we just need to read the next assignment
+        limit++;
+        continue;
+      }
+      if (categoryAssignments[i].id == assignment.id) return true;
+    }
+    return false;
+  }
+
+  public static dropFromHypoArray(assignments: Assignment[], amount: number): Assignment[] {
+    let arr = [...assignments].filter((a) => !(a.exempt));
+    arr.sort((a, b) => gradeToPercent[a.grade] - gradeToPercent[b.grade]);
+    let limit = arr.length <= amount ? arr.length - 1 : amount;
+    arr = arr.filter((a) => !a.see);
+    let curI = 0;
+
+    // at this point, category assignments is sorted by grade, so we can just iterate through the array and drop the lowest grades
+    // also, it does not include exempt assignments, only the see assignment which we need to avoid
+
+    while (limit > 0) {
+      delete arr[curI];
+      limit--;
+      curI++;
+    }
+
+    return arr.filter((a) => a !== undefined);
+  }
+
+  /**
+   * 
+   * @param category the category to get the assignments from
+   * @param includeExempt if true, exempt and dropped assignments are included in the calculations (default is true)
+   * @param excludeSee if true, the see assignment is not included in the calculations (default is false)
+   * @returns 
+   */
+  public getAssignmentsByCategory(category: Category, includeExempt: boolean = true, excludeSee: boolean = false): Assignment[] {
+    let categoryAssignments = this.assignments.filter((assignment) => assignment.category === category && (includeExempt || !assignment.exempt));
+
+    if (includeExempt) return categoryAssignments.filter((a) => (!excludeSee || !a.see));
+    else if (categoryAssignments.length == 0) return [];
+
+    categoryAssignments.sort((a, b) => gradeToPercent[a.grade] - gradeToPercent[b.grade]);
+
+    // the actual limit to how many assignments to drop
+    let limit = categoryAssignments.filter(a => !(a.exempt) && (!excludeSee || !a.see)).length <= category.dropLowest ? categoryAssignments.filter(a => !(a.exempt) && (!excludeSee || !a.see)).length - 1 : category.dropLowest;
+
+
+    let curI = 0;
+
+    // at this point, category assignments is sorted by grade, so we can just iterate through the array and drop the lowest grades
+    // also, it does not include exempt assignments, only the see assignment which we need to avoid
+
+    while (limit > 0) {
+      if (!categoryAssignments[curI].see) {
+        delete categoryAssignments[curI];
+        limit--;
+      }
+      curI++;
+    }
+
+    return categoryAssignments.filter((a) => a !== undefined && (!excludeSee || !a.see));
   }
 
   /**
@@ -230,9 +298,11 @@ export class GradeManager {
   public getEffectiveRelativeWeight(assignmentIndex: number): string {
     let assignment = this.assignments[assignmentIndex];
     if (assignment === undefined) return "";
+    if (this.isAssignmentDropped(assignment)) return "Dropped";
+
     let categoryAssignments = this.getAssignmentsByCategory(assignment.category, false);
 
-    let weights = categoryAssignments.map((a) => a.weight);
+    let weights = categoryAssignments.map((a) => a.weight)
 
     if (weights.includes(0)) return "";
 
@@ -240,18 +310,20 @@ export class GradeManager {
 
     let gcd = findGCD(weights);
 
-    if (assignment.weight / gcd > 200 || sum / gcd > 200) return `${Math.round((assignment.weight / sum) * 10 * 100) / 10}%`;
+    if (assignment.weight / gcd > 300 || sum / gcd > 300) return `${Math.round((assignment.weight / sum) * 10 * 100) / 10}%`;
 
     return `${assignment.weight / gcd}/${sum / gcd} (${Math.round((assignment.weight / sum) * 10 * 100) / 10}%)`;
   }
 
   public getEffectiveWeightInTotal(assignmentIndex: number): string {
     let assignment = this.assignments[assignmentIndex];
-    let categoryAssignments = this.getAssignmentsByCategory(assignment.category, false);
+    if (this.isAssignmentDropped(assignment)) return "Dropped";
+
+    let sumOfWeights = this.sumOfWeightsInCategory(assignment.category, false);
 
     if (this.getTotalWeight() == 0) return "";
 
-    return String(Math.round((assignment.weight / this.sumOfWeightsInCategory(assignment.category, false)) * (assignment.category.weight / this.getTotalWeight()) * 100 * 10) / 10) + "%";
+    return String(Math.round((assignment.weight / sumOfWeights) * (assignment.category.weight / this.getTotalWeight()) * 100 * 10) / 10) + "%";
   }
 
   /**
@@ -285,15 +357,20 @@ export class GradeManager {
    * @returns the sum of the weights of all assignments in the category, excluding the exempt assignments
    */
   public sumOfWeightsInCategory(category: Category, excludeSee: boolean = true): number {
-    let categoryAssignments = this.getAssignmentsByCategory(category, false);
+    let categoryAssignments = this.getAssignmentsByCategory(category, false, excludeSee);
     let categoryAssignmentWeight = 0;
-    for (let assignment of categoryAssignments) {
-      if (excludeSee && assignment.see) continue;
+
+    for (let i = 0; i < categoryAssignments.length; i++) {
+      let assignment = categoryAssignments[i];
       categoryAssignmentWeight += assignment.weight;
     }
     return categoryAssignmentWeight;
   }
 
+  /**
+   * Final grade percentage without see assignment
+   * @returns the final grade percentage of the class, or SpecialGrade.INC if the class has an INC grade, or SpecialGrade.INVALID if the weights are invalid
+   */
   public calculateGradePercentage(): number | SpecialGrade.INC | SpecialGrade.INVALID {
     if (!this.validWeights()) return SpecialGrade.INVALID;
     let totalGrade = 0;
@@ -301,16 +378,20 @@ export class GradeManager {
     let calcedTotalWeight = this.getCalcedTotalWeight();
 
     for (let category of this.categories) {
-      let categoryAssignments = this.getAssignmentsByCategory(category, false);
-      // if the see assignment is the only assignment in the category, it is not included in calculations
-      if (this.getSeeAssignment()?.category.id == category.id && categoryAssignments.length == 1) continue;
+      if (this.getAssignmentsByCategory(category).find((a) => !a.exempt && !a.see && a.grade == "INC_NO_CLASS_CREDIT")) return SpecialGrade.INC;
+
+      let categoryAssignments = this.getAssignmentsByCategory(category, false, true);
+      console.log(categoryAssignments, category);
+
+      // if the category has no effective assignments (e.g., filled with only see and exempt assignments), skip it 
+      if (categoryAssignments.length == 0) continue;
+
       let categoryGrade = 0;
-      let categorySumOfWeights = this.sumOfWeightsInCategory(category);
-      for (let assignment of categoryAssignments) {
-        if (assignment.see) continue;
-        if (assignment.exempt) continue;
-        if (assignment.grade == "INC_NO_CREDIT") continue;
-        if (assignment.grade == "INC_NO_CLASS_CREDIT") return SpecialGrade.INC;
+      let categorySumOfWeights = 0;
+      for (let i = 0; i < categoryAssignments.length; i++) {
+        let assignment = categoryAssignments[i];
+
+        categorySumOfWeights += assignment.weight;
         categoryGrade += gradeToPercent[assignment.grade] * (assignment.weight);
       }
       if (categoryGrade != 0 && calcedTotalWeight != 0) {
@@ -327,7 +408,7 @@ export class GradeManager {
     let totalWeight = this.getTotalWeight();
 
     let seeAssignment = this.getSeeAssignment();
-    if (seeAssignment && this.getAssignmentsByCategory(seeAssignment.category, false).length <= 1) return totalWeight - seeAssignment.category.weight;
+    if (seeAssignment && this.getAssignmentsByCategory(seeAssignment.category, false, true).length < 1) return totalWeight - seeAssignment.category.weight;
     return totalWeight;
   }
 
@@ -340,17 +421,33 @@ export class GradeManager {
     return totalWeight;
   }
 
+  public static calculateHypoGradePercentage(assignments: Assignment[], drop: number): number | SpecialGrade.INC | SpecialGrade.INVALID {
+    let arr = [...assignments].filter((a) => !(a.exempt || a.see));
+    let categoryGrade = 0;
+    if (arr.find((a) => a.grade == "INC_NO_CLASS_CREDIT")) return SpecialGrade.INC;
+    arr = GradeManager.dropFromHypoArray(arr, drop);
+
+    let categorySumOfWeights = 0;
+    for (let i = 0; i < arr.length; i++) {
+      let assignment = arr[i];
+      categorySumOfWeights += assignment.weight;
+      categoryGrade += gradeToPercent[assignment.grade] * assignment.weight;
+    }
+    if (categorySumOfWeights != 0) return categoryGrade / categorySumOfWeights;
+    return 0;
+  }
+
   public calculateCategoryGradePercentage(categoryId: number): number | SpecialGrade.INC | SpecialGrade.INVALID {
     let category = this.getCategoryById(categoryId);
     if (category === null) return SpecialGrade.INVALID;
     let categoryGrade = 0;
-    let categoryAssignments = this.getAssignmentsByCategory(category, false);
-    let categorySumOfWeights = this.sumOfWeightsInCategory(category);
-    for (let assignment of categoryAssignments) {
-      if (assignment.see) continue;
-      if (assignment.exempt) continue;
-      if (assignment.grade == "INC_NO_CREDIT") continue;
-      if (assignment.grade == "INC_NO_CLASS_CREDIT") return SpecialGrade.INC;
+    if (this.getAssignmentsByCategory(category).find((a) => !a.see && !a.exempt && a.grade == "INC_NO_CLASS_CREDIT")) return SpecialGrade.INC;
+    let categoryAssignments = this.getAssignmentsByCategory(category, false, true);
+
+    let categorySumOfWeights = 0;
+    for (let i = 0; i < categoryAssignments.length; i++) {
+      let assignment = categoryAssignments[i];
+      categorySumOfWeights += assignment.weight;
       categoryGrade += gradeToPercent[assignment.grade] * assignment.weight;
     }
     if (categorySumOfWeights != 0) return categoryGrade / categorySumOfWeights;
@@ -378,12 +475,14 @@ export class Category {
   public name: string;
   public weight: number;
   public id: number;
+  public dropLowest: number;
   public static nextId = 0;
 
-  public constructor(name: string, weight: number) {
+  public constructor(name: string, weight: number, dropLowest: number = 0) {
     this.name = name;
     this.weight = weight;
     this.id = Category.nextId++;
+    this.dropLowest = dropLowest;
   }
 }
 export class Assignment {

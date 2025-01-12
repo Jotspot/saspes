@@ -136,14 +136,22 @@ const doScoreTools = async () => {
   );
 
   const saved = await browser.storage.local.get("weights" + key);
+  const savedDrop = await browser.storage.local.get("drop" + key);
 
   saved.weights = saved["weights" + key] || {};
+  saved.drop = savedDrop["drop" + key] || {};
 
-  let leftOver = { ...(saved.weights) };
+  let leftOver: Record<string, { weight: number, dropLowest: number }> = {};
+  for (let category in saved.weights) {
+    if (saved.weights[category] || saved.drop[category]) {
+      leftOver[category] = { weight: saved.weights[category] ?? 0, dropLowest: saved.drop[category] ?? 0 };
+    }
+  }
 
   for (let category of gradeManager.categories) {
-    if (saved.weights[category.name]) {
-      category.weight = Number(saved.weights[category.name]);
+    if (category.name in leftOver) {
+      category.weight = Number(leftOver[category.name].weight);
+      category.dropLowest = Number(leftOver[category.name].dropLowest);
       delete leftOver[category.name];
     }
   }
