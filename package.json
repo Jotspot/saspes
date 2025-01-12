@@ -21,6 +21,7 @@
     "@crxjs/vite-plugin": "^2.0.0-beta.28",
     "@tsconfig/svelte": "^5.0.2",
     "@types/chrome": "^0.0.254",
+    "@types/node": "^22.10.5",
     "@types/sanitize-html": "^2.11.0",
     "@types/semver": "^7.5.8",
     "@types/webextension-polyfill": "^0.10.7",

@@ -3,7 +3,7 @@ import 'dotenv/config';
 import packageJson from './package.json';
 const { version } = packageJson
 
-
+console.log(process.argv)
 
 export const realVersion = `${new Date().getUTCFullYear()}.${new Date().getUTCMonth() + 1}${String(new Date().getUTCDate()).padStart(2, "0")}.${new Date().getUTCMinutes()}${String(new Date().getUTCHours()).padStart(2, "0")}.${new Date().getUTCSeconds()}${String(new Date().getUTCMilliseconds()).padStart(3, "0")}`;
 export default defineManifest(async (env) => ({
@@ -11,7 +11,7 @@ export default defineManifest(async (env) => ({
   // In UTC time: YYYY.MMDD.HHMM.SSmmm
   version: realVersion,
   // semver is OK in "version_name"
-  version_name: version + (process.argv[4] === "production" ? "" : ` Dev Build ${realVersion}`),
+  version_name: version + (process.argv[4] === "SAS_PES_production" ? "" : ` Dev Build ${realVersion}`),
   "name": "SAS Powerschool Enhancement Suite",
   "description": "Provides various enhancements for SAS Powerschool",
   "action": {
