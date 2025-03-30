@@ -57,14 +57,12 @@ export class ClassManager {
     let totalCredits = this.getTotalCredits(1) + this.getTotalCredits(2);
     if (totalCredits === 0) return -1;
     for (const c of this.classes) {
-      if (c.grade.s1 === "INC_NO_CLASS_CREDIT") {
-        continue;
+      if (c.grade.s1 !== "INC_NO_CLASS_CREDIT" && c.grade.s1 !== null) {
+        gpa += (gradeToGPA[c.grade.s1] + (c.isBoosted ? 0.5 : 0)) * c.credits;
       }
-      if (c.grade.s2 === "INC_NO_CLASS_CREDIT") {
-        continue;
+      if (c.grade.s2 !== "INC_NO_CLASS_CREDIT" && c.grade.s2 !== null) {
+        gpa += (gradeToGPA[c.grade.s2] + (c.isBoosted ? 0.5 : 0)) * c.credits;
       }
-      if (c.grade.s1 !== null) gpa += (gradeToGPA[c.grade.s1] + (c.isBoosted ? 0.5 : 0)) * c.credits;
-      if (c.grade.s2 !== null) gpa += (gradeToGPA[c.grade.s2] + (c.isBoosted ? 0.5 : 0)) * c.credits;
     }
     return gpa / totalCredits;
   }

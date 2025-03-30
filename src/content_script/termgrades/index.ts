@@ -176,21 +176,24 @@ Promise.allSettled(fetches).then(async (res) => {
     homeClasses.push(new Class(name, { s1: s1Grade as Grade, s2: s2Grade as Grade }, null, "Now"));
   }
 
-  let allSame = true;
+  let same = 0;
   for (let homeClass of homeClasses) {
-    if (!arr.find(c => c.name === homeClass.name)) {
-      allSame = false;
+    let idx = arr.findIndex(c => c.name === homeClass.name);
+    if (idx !== -1) {
+      arr[idx].grade = homeClass.grade;
+    } else {
+      arr.unshift(homeClass);
     }
   }
 
-  if (!allSame) {
-    arr.push(...homeClasses);
-  } else {
-    for (let homeClass of homeClasses) {
-      let cor = arr.findIndex(c => c.name === homeClass.name);
-      arr[cor].grade = homeClass.grade;
-    }
-  }
+  // if (same <= 2) {
+  //   arr.push(...homeClasses);
+  // } else {
+  //   for (let homeClass of homeClasses) {
+  //     let cor = arr.findIndex(c => c.name === homeClass.name);
+  //     arr[cor].grade = homeClass.grade;
+  //   }
+  // }
 
   let cumManager = new ClassManager(arr);
 
@@ -202,4 +205,3 @@ Promise.allSettled(fetches).then(async (res) => {
   new Cumulative({ target: target as Element, props: { classManager: cumManager, hideGPA } });
 
 });
-

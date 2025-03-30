@@ -70,12 +70,12 @@ function waitForElm(selector: string): Promise<Element | null> {
   });
 }
 
-console.log(document.getElementById("pes-fp"));
+// console.log(document.getElementById("pes-fp"));
 if (document.getElementById("pes-fp") || document.getElementById("pes-st")) {
   document.getElementById("pes-fp")?.remove();
   document.getElementById("pes-st")?.remove();
 }
-console.log(document.getElementById("pes-fp"));
+// console.log(document.getElementById("pes-fp"));
 let gradeManagerO = new GradeManager([], []);
 
 const doScoreTools = async () => {
@@ -86,7 +86,8 @@ const doScoreTools = async () => {
   for (let i = 0; i < rowEles.length; i++) {
     let rowEle = rowEles[i];
     if (rowEle.querySelector("td.codeCol > div.tt-excluded") != null) {
-      console.log(rowEle); continue;
+      // console.log(rowEle); 
+      continue;
     };
 
     let gradeEle = rowEle.querySelector("td.ng-binding.ng-scope");
@@ -108,7 +109,8 @@ const doScoreTools = async () => {
         }
       }
       if (!validGrade) {
-        console.log(rowEle); continue;
+        // console.log(rowEle); 
+        continue;
       }
       let category = gradeManager.getCategoryByName(categoryEle.textContent.trim());
       if (!category) {
@@ -158,7 +160,7 @@ const doScoreTools = async () => {
   }
 
 
-  console.log(gradeManager);
+  // console.log(gradeManager);
   gradeManagerO = gradeManager;
   new ScoreTools({
     target: target as Element,

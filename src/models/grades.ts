@@ -109,6 +109,7 @@ function gcd(a: number, b: number): number {
 function findGCD(arr: number[]): number {
   let result = arr[0];
   for (let i = 1; i < arr.length; i++) {
+    if (arr[i] == null || arr[i] == undefined) arr[i] = 0;
     result = gcd(arr[i], result);
 
     if (result == 1) {
@@ -304,7 +305,8 @@ export class GradeManager {
 
     let weights = categoryAssignments.map((a) => a.weight)
 
-    if (weights.includes(0)) return "";
+    // @ts-expect-error if the text box is blank it turns null
+    if (weights.includes(0) || weights.includes(null)) return "";
 
     let sum = weights.reduce((a, b) => a + b, 0);
 
