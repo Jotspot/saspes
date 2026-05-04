@@ -44,7 +44,15 @@ jobs:
         run: curl -L "${{ github.event.inputs.extension_url }}" -o extension.zip
 
       - name: Unzip extension
-        run: unzip extension.zip -d extension
+        run: |
+          unzip extension.zip -d extension_raw
+          # Handle nested folder if present
+          if [ -f extension_raw/manifest.json ]; then
+            mv extension_raw extension
+          else
+            mv extension_raw/*/ extension
+          fi
+        
 
       - name: Convert to Safari extension
         run: |
