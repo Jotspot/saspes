@@ -1,0 +1,58 @@
+name: Build PES for Safari
+
+on:
+  workflow_dispatch:
+    inputs:
+      extension_url:
+        description: 'Direct zip URL of the Chrome extension (Default is latest Chrome dist)'
+        required: true
+        default: 'https://github.com/sas-fossdev/saspes/releases/latest/download/dist_chrome.zip'
+      app_name:
+        description: 'App name'
+        required: true
+        default: 'SAS Powerschool Enhancement Suite'
+      bundle_id:
+        description: 'Bundle identifier'
+        required: true
+        default: 'com.sasfossdev.saspes'
+
+jobs:
+  convert:
+    runs-on: macos-latest
+    steps:
+      - name: Download extension
+        run: curl -L "${{ github.event.inputs.extension_url }}" -o extension.zip
+
+      - name: Unzip extension
+        run: unzip extension.zip -d extension
+
+      - name: Convert to Safari extension
+        run: |
+          xcrun safari-web-extension-converter extension/ \
+            --project-location output/ \
+            --app-name "${{ github.event.inputs.app_name }}" \
+            --bundle-identifier "${{ github.event.inputs.bundle_id }}" \
+            --macos-only \
+            --no-open
+
+      - name: Build for macOS
+        run: |
+          xcodebuild -project "output/${{ github.event.inputs.app_name }}/${{ github.event.inputs.app_name }}.xcodeproj" \
+            -scheme "${{ github.event.inputs.app_name }}" \
+            -configuration Release \
+            -sdk macosx \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CONFIGURATION_BUILD_DIR=${{ github.workspace }}/build
+
+      - name: Package .app
+        run: |
+          cd ${{ github.workspace }}/build
+          zip -r "${{ github.workspace }}/${{ github.event.inputs.app_name }}.zip" "${{ github.event.inputs.app_name }}.app"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.inputs.app_name }}
+          path: ${{ github.event.inputs.app_name }}.zip
